@@ -167,8 +167,9 @@ def masked_softmax(vector, mask):
         result = torch.nn.functional.softmax(vector)
     else:
         # To limit numerical errors from large vector elements outside mask, we zero these out
-        vector.data.masked_fill_(mask.data, -float('inf'))
-        result = torch.nn.functional.softmax(vector)
+        result = vector.clone()
+        result = result.data.masked_fill_(mask.data, -float('inf'))
+        result = torch.nn.functional.softmax(result)
     return result
 
 
@@ -185,8 +186,12 @@ def masked_log_softmax(vector, mask):
     case, anyway, so it shouldn't matter.
     """
     if mask is not None:
-        vector.data.masked_fill_(mask.data, -float('inf'))
-    return torch.nn.functional.log_softmax(vector)
+        result = vector.clone()
+        result = result.data.masked_fill_(mask.data, -float('inf'))
+        result = torch.nn.functional.log_softmax(result)
+    else:
+        result = torch.nn.functional.log_softmax(vector)
+    return result
 
 
 def viterbi_decode(tag_sequence: torch.Tensor,
