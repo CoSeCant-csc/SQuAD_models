@@ -35,7 +35,7 @@ def add_model_args(parser):
 
     # Model architecture
     model = parser.add_argument_group('Reader Model Architecture')
-    model.add_argument('--module-type', type=str, default='drqa',
+    model.add_argument('--model-type', type=str, default='drqa',
                        help='Model architecture type')
     model.add_argument('--embedding-dim', type=int, default=300,
                        help='Embedding size if embedding_file is not given')
