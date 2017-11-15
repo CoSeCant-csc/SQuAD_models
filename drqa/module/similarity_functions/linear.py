@@ -45,7 +45,7 @@ class LinearSimilarity(SimilarityFunction):
                  tensor_1_dim: int,
                  tensor_2_dim: int,
                  combination='x,y',
-                 activation=lambda: lambda x: x) -> None:
+                 activation=lambda x: x) -> None:
         super(LinearSimilarity, self).__init__()
         self._combination = combination
         combined_dim = util.get_combined_dim(combination, [tensor_1_dim, tensor_2_dim])
