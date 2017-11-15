@@ -1,4 +1,4 @@
---model-type bidaf
+--module-type bidaf
 --tune-partial 1000
 --concat-rnn-layers False
 --doc-layers 1
