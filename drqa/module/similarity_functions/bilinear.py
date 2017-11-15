@@ -1,5 +1,6 @@
 import torch
 from torch.nn.parameter import Parameter
+from overrides import overrides
 
 from drqa.module.similarity_functions.similarity_function import SimilarityFunction
 

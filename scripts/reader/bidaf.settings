@@ -1,4 +1,5 @@
 --model-type bidaf
+--tune-partial 1000
 --concat-rnn-layers False
 --doc-layers 1
 --question-layers 1
