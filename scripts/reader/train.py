@@ -67,9 +67,9 @@ def add_train_args(parser):
 
     # Files
     files = parser.add_argument_group('Filesystem')
-    files.add_argument('--module-dir', type=str, default=MODEL_DIR,
+    files.add_argument('--model-dir', type=str, default=MODEL_DIR,
                        help='Directory for saved models/checkpoints/logs')
-    files.add_argument('--module-name', type=str, default='',
+    files.add_argument('--model-name', type=str, default='',
                        help='Unique module identifier (.mdl, .txt, .checkpoint)')
     files.add_argument('--data-dir', type=str, default=DATA_DIR,
                        help='Directory of training/validation data')
