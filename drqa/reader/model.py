@@ -233,23 +233,23 @@ class DocReader(object):
 
         # Run forward
         score_s, score_e = self.network(*inputs)
-        print(score_s.size(), score_e.size())
-        print("start.max=%f, start.min=%f, start.avg=%f, end.max=%f, end.min=%f, end.avg=%f " %(
-              torch.max(score_s.data),
-              torch.min(score_s.data),
-              torch.sum(score_s.data) / (score_s.size()[0] * score_s.size()[1]),
-              torch.max(score_e.data),
-              torch.min(score_e.data),
-              torch.sum(score_e.data) / (score_e.size()[0] * score_e.size()[1])
-        ) )
-        s = [score_s.data[i][t] for i, t in zip(range(score_s.data.size()[0]), target_s.data)]
-        e = [(score_e.data[i][t], target_e.data[i]) for i, t in zip(range(score_e.data.size()[0]), target_e.data)]
-        # print(score_s.data.index_select(1, target_s.data).diag(), score_e.data.index_select(1, target_e.data).diag())
-        print(e)
+        # print(score_s.size(), score_e.size())
+        # print("start.max=%f, start.min=%f, start.avg=%f, end.max=%f, end.min=%f, end.avg=%f " %(
+        #       torch.max(score_s.data),
+        #       torch.min(score_s.data),
+        #       torch.sum(score_s.data) / (score_s.size()[0] * score_s.size()[1]),
+        #       torch.max(score_e.data),
+        #       torch.min(score_e.data),
+        #       torch.sum(score_e.data) / (score_e.size()[0] * score_e.size()[1])
+        # ) )
+        # s = [score_s.data[i][t] for i, t in zip(range(score_s.data.size()[0]), target_s.data)]
+        # e = [(score_e.data[i][t], target_e.data[i]) for i, t in zip(range(score_e.data.size()[0]), target_e.data)]
+        # # print(score_s.data.index_select(1, target_s.data).diag(), score_e.data.index_select(1, target_e.data).diag())
+        # print(e)
 
         # Compute loss and accuracies
         loss = F.nll_loss(score_s, target_s) + F.nll_loss(score_e, target_e)
-        print(loss.data[0])
+        # print(loss.data[0])
 
 
         # Clear gradients and run backward
