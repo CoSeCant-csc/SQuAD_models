@@ -37,10 +37,10 @@ class DocReader(object):
         self.args = args
         self.word_dict = word_dict
         self.args.vocab_size = len(word_dict)
-        if self.character_dict:
-            self.args.character_vocab_size = len(character_dict)
         self.feature_dict = feature_dict
         self.character_dict = character_dict
+        if self.character_dict:
+            self.args.character_vocab_size = len(character_dict)
         self.args.num_features = len(feature_dict)
         self.updates = 0
         self.use_cuda = False
