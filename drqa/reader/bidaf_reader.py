@@ -25,6 +25,7 @@ class BidafDocReader(nn.Module):
         self.embedding = nn.Embedding(args.vocab_size,
                                       args.embedding_dim,
                                       padding_idx=0)
+        print(args)
         # Char embeddings (+1 for padding)
         self.char_embedding = nn.Embedding(args.character_vocab_size,
                                            args.char_embedding_dim,
