@@ -44,7 +44,7 @@ class CnnEncoder(torch.nn.Module):
                  embedding_dim,
                  num_filters,
                  ngram_filter_sizes=(2, 3, 4, 5),  # pylint: disable=bad-whitespace
-                 conv_layer_activation=torch.nn.ReLU,
+                 conv_layer_activation=torch.nn.ReLU(),
                  output_dim=None):
         super(CnnEncoder, self).__init__()
         self._embedding_dim = embedding_dim
