@@ -1,0 +1,11 @@
+--model-type mlstm
+--concat-rnn-layers False
+--doc-layers 1
+--question-layers 1
+--question-merge False
+--use-qemb False
+--use-in-question False
+--use-pos False
+--use-ner False 
+--use-lemma False  
+--use-tf False

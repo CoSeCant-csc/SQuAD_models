@@ -12,7 +12,7 @@ from .. import DATA_DIR
 
 DEFAULTS = {
     'tokenizer': CoreNLPTokenizer,
-    'model': os.path.join(DATA_DIR, 'reader/single.mdl'),
+    'module': os.path.join(DATA_DIR, 'reader/single.mdl'),
 }
 
 

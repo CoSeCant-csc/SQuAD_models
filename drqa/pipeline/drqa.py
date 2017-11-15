@@ -81,7 +81,7 @@ class DrQA(object):
         """Initialize the pipeline.
 
         Args:
-            reader_model: model file from which to load the DocReader.
+            reader_model: module file from which to load the DocReader.
             embedding_file: if given, will expand DocReader dictionary to use
               all available pretrained embeddings.
             tokenizer: string option to specify tokenizer used on docs.

@@ -6,7 +6,7 @@
 # LICENSE file in the root directory of this source tree.
 """Tokenizer that is backed by spaCy (spacy.io).
 
-Requires spaCy package and the spaCy english model.
+Requires spaCy package and the spaCy english module.
 """
 
 import spacy
@@ -20,9 +20,9 @@ class SpacyTokenizer(Tokenizer):
         """
         Args:
             annotators: set that can include pos, lemma, and ner.
-            model: spaCy model to use (either path, or keyword like 'en').
+            model: spaCy module to use (either path, or keyword like 'en').
         """
-        model = kwargs.get('model', 'en')
+        model = kwargs.get('module', 'en')
         self.annotators = copy.deepcopy(kwargs.get('annotators', set()))
         nlp_kwargs = {'parser': False}
         if not {'lemma', 'pos', 'ner'} & self.annotators:

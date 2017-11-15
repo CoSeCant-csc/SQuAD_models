@@ -99,7 +99,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('dataset', type=str, default=None)
-    parser.add_argument('--model', type=str, default=None)
+    parser.add_argument('--module', type=str, default=None)
     parser.add_argument('--doc-db', type=str, default=None,
                         help='Path to Document DB')
     parser.add_argument('--tokenizer', type=str, default='regexp')

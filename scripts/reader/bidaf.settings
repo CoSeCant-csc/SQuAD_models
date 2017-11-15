@@ -1,0 +1,19 @@
+--model-type bidaf
+--concat-rnn-layers False
+--doc-layers 1
+--question-layers 1
+--question-merge False
+--use-qemb False
+--use-in-question False
+--use-pos False
+--use-ner False
+--use-lemma False
+--use-tf False
+
+--modeling-layers 2
+--span-end-encode-layers 1
+--use-char-emb True
+--char-embedding-dim 16
+--char-cnn-num-filters 100
+--char-cnn-ngram-filter-sizes 5
+--highway-layers 2

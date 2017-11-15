@@ -1,6 +1,3 @@
-from typing import Optional, Tuple
-
-from overrides import overrides
 import torch
 from torch.nn import Conv1d, Linear
 
@@ -44,11 +41,11 @@ class CnnEncoder(torch.nn.Module):
         giving an output of shape ``len(ngram_filter_sizes) * num_filters``.
     """
     def __init__(self,
-                 embedding_dim: int,
-                 num_filters: int,
-                 ngram_filter_sizes: (2, 3, 4, 5),  # pylint: disable=bad-whitespace
-                 conv_layer_activation: torch.nn.ReLU,
-                 output_dim: None):
+                 embedding_dim,
+                 num_filters,
+                 ngram_filter_sizes=(2, 3, 4, 5),  # pylint: disable=bad-whitespace
+                 conv_layer_activation=torch.nn.ReLU,
+                 output_dim=None):
         super(CnnEncoder, self).__init__()
         self._embedding_dim = embedding_dim
         self._num_filters = num_filters
@@ -70,16 +67,13 @@ class CnnEncoder(torch.nn.Module):
             self.projection_layer = None
             self._output_dim = maxpool_output_dim
 
-    def get_input_dim(self) -> int:
+    def get_input_dim(self):
         return self._embedding_dim
 
-    def get_output_dim(self) -> int:
+    def get_output_dim(self):
         return self._output_dim
 
-    def forward(self, tokens: torch.Tensor, mask: torch.Tensor):  # pylint: disable=arguments-differ
-        if mask is not None:
-            tokens = tokens * mask.unsqueeze(-1).float()
-
+    def forward(self, tokens):  # pylint: disable=arguments-differ
         # Our input is expected to have shape `(batch_size, num_tokens, embedding_dim)`.  The
         # convolution layers expect input of shape `(batch_size, in_channels, sequence_length)`,
         # where the conv layer `in_channels` is our `embedding_dim`.  We thus need to transpose the

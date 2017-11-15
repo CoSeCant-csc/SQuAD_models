@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
-# Copyright 2017-present, Facebook, Inc.
-# All rights reserved.
-#
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
-"""Implementation of the RNN based DrQA reader."""
+"""Implementation of the match-LSTM based reader."""
 
 import torch
 import torch.nn as nn
@@ -16,11 +11,11 @@ from . import layers
 # ------------------------------------------------------------------------------
 
 
-class RnnDocReader(nn.Module):
+class mLSTMDocReader(nn.Module):
     RNN_TYPES = {'lstm': nn.LSTM, 'gru': nn.GRU, 'rnn': nn.RNN}
 
     def __init__(self, args, normalize=True):
-        super(RnnDocReader, self).__init__()
+        super(mLSTMDocReader, self).__init__()
         # Store config
         self.args = args
 
@@ -30,13 +25,13 @@ class RnnDocReader(nn.Module):
                                       padding_idx=0)
 
         # Projection for attention weighted question
-        if args.use_qemb:
-            self.qemb_match = layers.SeqAttnMatch(args.embedding_dim)
+        # if args.use_qemb:
+        #     self.qemb_match = layers.SeqAttnMatch(args.embedding_dim)
 
         # Input size to RNN: word emb + question emb + manual features
         doc_input_size = args.embedding_dim + args.num_features
-        if args.use_qemb:
-            doc_input_size += args.embedding_dim
+        # if args.use_qemb:
+        #     doc_input_size += args.embedding_dim
 
         # RNN document encoder
         self.doc_rnn = layers.StackedBRNN(
@@ -63,28 +58,33 @@ class RnnDocReader(nn.Module):
         )
 
         # Output sizes of rnn encoders
+        # Attention !!! question_rnn and doc_rnn are bi-directional
         doc_hidden_size = 2 * args.hidden_size
         question_hidden_size = 2 * args.hidden_size
         if args.concat_rnn_layers:
             doc_hidden_size *= args.doc_layers
             question_hidden_size *= args.question_layers
 
-        # Question merging
-        if args.question_merge not in ['avg', 'self_attn']:
-            raise NotImplementedError('merge_mode = %s' % args.merge_mode)
-        if args.question_merge == 'self_attn':
-            self.self_attn = layers.LinearSeqAttn(question_hidden_size)
+        self.match_lstm = layers.MatchLSTMLayer(
+            input_size=doc_hidden_size,
+            hidden_size=doc_hidden_size,
+            dropout_rate=args.dropout_rnn,
+            dropout_output=args.dropout_rnn_output,
+            concat_layers=args.concat_rnn_layers,
+            rnn_type=self.RNN_TYPES[args.rnn_type],
+            padding=args.rnn_padding,
+        )
 
         # Bilinear attention for span start/end
-        self.start_attn = layers.BilinearSeqAttn(
-            doc_hidden_size,
-            question_hidden_size,
+        self.answer_pointer_lstm = layers.BoundaryPointerLayer(
+            input_size=doc_hidden_size,
+            hidden_size=doc_hidden_size,
             normalize=normalize,
-        )
-        self.end_attn = layers.BilinearSeqAttn(
-            doc_hidden_size,
-            question_hidden_size,
-            normalize=normalize,
+            dropout_rate=args.dropout_rnn,
+            dropout_output=args.dropout_rnn_output,
+            concat_layers=args.concat_rnn_layers,
+            rnn_type=self.RNN_TYPES[args.rnn_type],
+            padding=args.rnn_padding,
         )
 
     def forward(self, x1, x1_f, x1_mask, x2, x2_mask):
@@ -109,11 +109,6 @@ class RnnDocReader(nn.Module):
         # Form document encoding inputs
         drnn_input = [x1_emb]
 
-        # Add attention-weighted question representation
-        if self.args.use_qemb:
-            x2_weighted_emb = self.qemb_match(x1_emb, x2_emb, x2_mask)  # batch * len_d
-            drnn_input.append(x2_weighted_emb)
-
         # Add manual features
         if self.args.num_features > 0:
             drnn_input.append(x1_f)
@@ -123,13 +118,10 @@ class RnnDocReader(nn.Module):
 
         # Encode question with RNN + merge hiddens
         question_hiddens = self.question_rnn(x2_emb, x2_mask)
-        if self.args.question_merge == 'avg':
-            q_merge_weights = layers.uniform_weights(question_hiddens, x2_mask)
-        elif self.args.question_merge == 'self_attn':
-            q_merge_weights = self.self_attn(question_hiddens, x2_mask)
-        question_hidden = layers.weighted_avg(question_hiddens, q_merge_weights)
+
+        # Feed in mLSTM
+        match_hiddens = self.match_lstm(question_hiddens, x2_mask, doc_hiddens, x1_mask)
 
         # Predict start and end positions
-        start_scores = self.start_attn(doc_hiddens, question_hidden, x1_mask)
-        end_scores = self.end_attn(doc_hiddens, question_hidden, x1_mask)
+        start_scores, end_scores = self.answer_pointer_lstm(match_hiddens, x1_mask)
         return start_scores, end_scores

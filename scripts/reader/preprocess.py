@@ -147,6 +147,9 @@ out_file = os.path.join(
 )
 print('Will write to file %s' % out_file, file=sys.stderr)
 with open(out_file, 'w') as f:
+    count = 0
     for ex in process_dataset(dataset, args.tokenizer, args.workers):
+        print("processing dataset %d" % count)
         f.write(json.dumps(ex) + '\n')
+        count += 1
 print('Total time: %.4f (s)' % (time.time() - t0))

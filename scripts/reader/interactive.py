@@ -4,7 +4,7 @@
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
-"""A script to run the DrQA reader model interactively."""
+"""A script to run the DrQA reader module interactively."""
 
 import torch
 import code
@@ -29,8 +29,8 @@ logger.addHandler(console)
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--model', type=str, default=None,
-                    help='Path to model to use')
+parser.add_argument('--module', type=str, default=None,
+                    help='Path to module to use')
 parser.add_argument('--tokenizer', type=str, default=None,
                     help=("String option specifying tokenizer type to use "
                           "(e.g. 'corenlp')"))

@@ -12,6 +12,7 @@ Serves commands to a java subprocess running the jar. Requires java 8.
 import copy
 import json
 import pexpect
+import sys
 
 from .tokenizer import Tokens, Tokenizer
 from . import DEFAULTS
@@ -28,6 +29,7 @@ class CoreNLPTokenizer(Tokenizer):
         """
         self.classpath = (kwargs.get('classpath') or
                           DEFAULTS['corenlp_classpath'])
+        print(self.classpath)
         self.annotators = copy.deepcopy(kwargs.get('annotators', set()))
         self.mem = kwargs.get('mem', '2g')
         self._launch()
@@ -53,12 +55,18 @@ class CoreNLPTokenizer(Tokenizer):
         # Because we don't want to get hit by the max terminal buffer size,
         # we turn off canonical input processing to have unlimited bytes.
         self.corenlp = pexpect.spawn('/bin/bash', maxread=100000, timeout=60)
+
         self.corenlp.setecho(False)
         self.corenlp.sendline('stty -icanon')
         self.corenlp.sendline(' '.join(cmd))
         self.corenlp.delaybeforesend = 0
         self.corenlp.delayafterread = 0
-        self.corenlp.expect_exact('NLP>', searchwindowsize=100)
+        try:
+            self.corenlp.expect_exact('NLP>', searchwindowsize=100)
+        except:
+            print("Exception was thrown")
+            print("debug information:")
+            print(str(self.corenlp))
 
     @staticmethod
     def _convert(token):

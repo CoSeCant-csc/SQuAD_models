@@ -4,7 +4,7 @@
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
-"""DrQA Document Reader model"""
+"""DrQA Document Reader module"""
 
 import torch
 import torch.optim as optim
@@ -16,12 +16,14 @@ import copy
 from torch.autograd import Variable
 from .config import override_model_args
 from .rnn_reader import RnnDocReader
+from .mLSTM_reader import mLSTMDocReader
+from .bidaf_reader import BidafDocReader
 
 logger = logging.getLogger(__name__)
 
 
 class DocReader(object):
-    """High level model that handles intializing the underlying network
+    """High level module that handles intializing the underlying network
     architecture, saving, updating examples, and predicting examples.
     """
 
@@ -29,13 +31,16 @@ class DocReader(object):
     # Initialization
     # --------------------------------------------------------------------------
 
-    def __init__(self, args, word_dict, feature_dict,
+    def __init__(self, args, word_dict, feature_dict, character_dict=None,
                  state_dict=None, normalize=True):
         # Book-keeping.
         self.args = args
         self.word_dict = word_dict
         self.args.vocab_size = len(word_dict)
+        if self.character_dict:
+            self.args.character_vocab_size = len(character_dict)
         self.feature_dict = feature_dict
+        self.character_dict = character_dict
         self.args.num_features = len(feature_dict)
         self.updates = 0
         self.use_cuda = False
@@ -43,10 +48,14 @@ class DocReader(object):
 
         # Building network. If normalize if false, scores are not normalized
         # 0-1 per paragraph (no softmax).
-        if args.model_type == 'rnn':
+        if args.model_type.lower() == 'drpa':
             self.network = RnnDocReader(args, normalize)
+        if args.model_type.lower() == 'mlstm':
+            self.network = mLSTMDocReader(args, normalize)
+        if args.model_type.lower() == 'bidaf':
+            self.network = BidafDocReader(args, normalize)
         else:
-            raise RuntimeError('Unsupported model: %s' % args.model_type)
+            raise RuntimeError('Unsupported module: %s' % args.model_type)
 
         # Load saved state
         if state_dict:
@@ -202,20 +211,46 @@ class DocReader(object):
 
         # Transfer to GPU
         if self.use_cuda:
-            inputs = [e if e is None else Variable(e.cuda(async=True))
-                      for e in ex[:5]]
-            target_s = Variable(ex[5].cuda(async=True))
-            target_e = Variable(ex[6].cuda(async=True))
+            if self.character_dict:
+                inputs = [e if e is None else Variable(e.cuda(async=True))
+                          for e in ex[:9]]
+                target_s = Variable(ex[9].cuda(async=True))
+                target_e = Variable(ex[10].cuda(async=True))
+            else:
+                inputs = [e if e is None else Variable(e.cuda(async=True))
+                          for e in ex[:5]]
+                target_s = Variable(ex[5].cuda(async=True))
+                target_e = Variable(ex[6].cuda(async=True))
         else:
-            inputs = [e if e is None else Variable(e) for e in ex[:5]]
-            target_s = Variable(ex[5])
-            target_e = Variable(ex[6])
+            if self.character_dict:
+                inputs = [e if e is None else Variable(e) for e in ex[:9]]
+                target_s = Variable(ex[9])
+                target_e = Variable(ex[10])
+            else:
+                inputs = [e if e is None else Variable(e) for e in ex[:5]]
+                target_s = Variable(ex[5])
+                target_e = Variable(ex[6])
 
         # Run forward
         score_s, score_e = self.network(*inputs)
+        # print(score_s.size(), score_e.size())
+        # print("start.max=%f, start.min=%f, start.avg=%f, end.max=%f, end.min=%f, end.avg=%f " %(
+        #       torch.max(score_s.data),
+        #       torch.min(score_s.data),
+        #       torch.sum(score_s.data) / (score_s.size()[0] * score_s.size()[1]),
+        #       torch.max(score_e.data),
+        #       torch.min(score_e.data),
+        #       torch.sum(score_e.data) / (score_e.size()[0] * score_e.size()[1])
+        # ) )
+        # s = [score_s.data[i][t] for i, t in zip(range(score_s.data.size()[0]), target_s.data)]
+        # e = [(score_e.data[i][t], target_e.data[i]) for i, t in zip(range(score_e.data.size()[0]), target_e.data)]
+        # # print(score_s.data.index_select(1, target_s.data).diag(), score_e.data.index_select(1, target_e.data).diag())
+        # print(e)
 
         # Compute loss and accuracies
         loss = F.nll_loss(score_s, target_s) + F.nll_loss(score_e, target_e)
+        print(loss.data[0])
+
 
         # Clear gradients and run backward
         self.optimizer.zero_grad()
@@ -260,7 +295,7 @@ class DocReader(object):
         Args:
             ex: the batch
             candidates: batch * variable length list of string answer options.
-              The model will only consider exact spans contained in this list.
+              The module will only consider exact spans contained in this list.
             top_n: Number of predictions to return per batch element.
             async_pool: If provided, non-gpu post-processing will be offloaded
               to this CPU process pool.
@@ -423,7 +458,7 @@ class DocReader(object):
 
     @staticmethod
     def load(filename, new_args=None, normalize=True):
-        logger.info('Loading model %s' % filename)
+        logger.info('Loading module %s' % filename)
         saved_params = torch.load(
             filename, map_location=lambda storage, loc: storage
         )
@@ -437,7 +472,7 @@ class DocReader(object):
 
     @staticmethod
     def load_checkpoint(filename, normalize=True):
-        logger.info('Loading model %s' % filename)
+        logger.info('Loading module %s' % filename)
         saved_params = torch.load(
             filename, map_location=lambda storage, loc: storage
         )
@@ -464,7 +499,7 @@ class DocReader(object):
         self.network = self.network.cpu()
 
     def parallelize(self):
-        """Use data parallel to copy the model across several gpus.
+        """Use data parallel to copy the module across several gpus.
         This will take all gpus visible with CUDA_VISIBLE_DEVICES.
         """
         self.parallel = True

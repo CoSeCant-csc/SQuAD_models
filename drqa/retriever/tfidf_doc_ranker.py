@@ -28,7 +28,7 @@ class TfidfDocRanker(object):
     def __init__(self, tfidf_path=None, strict=True):
         """
         Args:
-            tfidf_path: path to saved model file
+            tfidf_path: path to saved module file
             strict: fail on empty queries or continue (and return empty result)
         """
         # Load from disk

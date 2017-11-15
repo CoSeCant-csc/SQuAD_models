@@ -20,7 +20,7 @@ console.setFormatter(fmt)
 logger.addHandler(console)
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--model', type=str, default=None)
+parser.add_argument('--module', type=str, default=None)
 args = parser.parse_args()
 
 logger.info('Initializing ranker...')

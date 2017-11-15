@@ -59,6 +59,20 @@ def load_text(filename):
                 texts[qa['id']] = paragraph['context']
     return texts
 
+def load_text_with_id(filename):
+    """Load the paragraphs only of a SQuAD dataset. Store as qid -> (cid, text)."""
+    # Load JSON file
+    with open(filename) as f:
+        examples = json.load(f)['data']
+
+    texts = {}
+    cid = 0
+    for article in examples:
+        for paragraph in article['paragraphs']:
+            cid += 1
+            for qa in paragraph['qas']:
+                texts[qa['id']] = (cid, paragraph['context'])
+    return texts
 
 def load_answers(filename):
     """Load the answers only of a SQuAD dataset. Store as qid -> [answers]."""
@@ -73,6 +87,18 @@ def load_answers(filename):
                 ans[qa['id']] = list(map(lambda x: x['text'], qa['answers']))
     return ans
 
+def load_questions(filename):
+    """Load the answers only of a SQuAD dataset. Store as qid -> question."""
+    # Load JSON file
+    with open(filename) as f:
+        examples = json.load(f)['data']
+
+    ans = {}
+    for article in examples:
+        for paragraph in article['paragraphs']:
+            for qa in paragraph['qas']:
+                ans[qa['id']] = qa['question']
+    return ans
 
 # ------------------------------------------------------------------------------
 # Dictionary building
@@ -111,6 +137,19 @@ def load_words(args, examples):
         _insert(ex['document'])
     return words
 
+def load_characters(args, examples):
+    """Iterate and index all the characters in examples (documents + questions)."""
+    def _insert(iterable):
+        for w in iterable:
+            w = Dictionary.normalize(w)
+            for character in w:
+                characters.add(character)
+
+    characters = set()
+    for ex in examples:
+        _insert(ex['question'])
+        _insert(ex['document'])
+    return characters
 
 def build_word_dict(args, examples):
     """Return a dictionary from question and document words in
@@ -121,6 +160,14 @@ def build_word_dict(args, examples):
         word_dict.add(w)
     return word_dict
 
+def build_character_dict(args, examples):
+    """Return a dictionary from question and document character in
+    provided examples.
+    """
+    character_dict = Dictionary()
+    for c in load_characters(args, examples):
+        character_dict.add(c)
+    return character_dict
 
 def top_question_words(args, examples, word_dict):
     """Count and return the most common question words in provided examples."""

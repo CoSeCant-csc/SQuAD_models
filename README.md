@@ -170,8 +170,8 @@ Default model paths for the different modules can also be modified programmatica
 
 ```python
 import drqa.reader
-drqa.reader.set_default('model', '/path/to/model')
-reader = drqa.reader.Predictor()  # Default model loaded for prediction
+drqa.reader.set_default(module, module)
+reader = drqa.reader.Predictor()  module
 ```
 
 #### Document Retriever

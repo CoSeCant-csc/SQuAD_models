@@ -4,21 +4,21 @@
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
-"""Model architecture/optimization options for DrQA document reader."""
+"""Model architecture/optimization options for document reader."""
 
 import argparse
 import logging
 
 logger = logging.getLogger(__name__)
 
-# Index of arguments concerning the core model architecture
+# Index of arguments concerning the core module architecture
 MODEL_ARCHITECTURE = {
     'model_type', 'embedding_dim', 'hidden_size', 'doc_layers',
     'question_layers', 'rnn_type', 'concat_rnn_layers', 'question_merge',
     'use_qemb', 'use_in_question', 'use_pos', 'use_ner', 'use_lemma', 'use_tf'
 }
 
-# Index of arguments concerning the model optimizer/training
+# Index of arguments concerning the module optimizer/training
 MODEL_OPTIMIZER = {
     'fix_embeddings', 'optimizer', 'learning_rate', 'momentum', 'weight_decay',
     'rnn_padding', 'dropout_rnn', 'dropout_rnn_output', 'dropout_emb',
@@ -34,8 +34,8 @@ def add_model_args(parser):
     parser.register('type', 'bool', str2bool)
 
     # Model architecture
-    model = parser.add_argument_group('DrQA Reader Model Architecture')
-    model.add_argument('--model-type', type=str, default='rnn',
+    model = parser.add_argument_group('Reader Model Architecture')
+    model.add_argument('--module-type', type=str, default='drqa',
                        help='Model architecture type')
     model.add_argument('--embedding-dim', type=int, default=300,
                        help='Embedding size if embedding_file is not given')
@@ -49,7 +49,7 @@ def add_model_args(parser):
                        help='RNN type: LSTM, GRU, or RNN')
 
     # Model specific details
-    detail = parser.add_argument_group('DrQA Reader Model Details')
+    detail = parser.add_argument_group('Reader Model Details')
     detail.add_argument('--concat-rnn-layers', type='bool', default=True,
                         help='Combine hidden states from each encoding layer')
     detail.add_argument('--question-merge', type=str, default='self_attn',
@@ -67,8 +67,24 @@ def add_model_args(parser):
     detail.add_argument('--use-tf', type='bool', default=True,
                         help='Whether to use term frequency features')
 
+    bidaf = parser.add_argument_group('BiDAF Reader Config')
+    bidaf.add_argument('--modeling-layers', type=int, default=2,
+                       help='Number of encoding layers for modeling layer (for bidaf model)')
+    bidaf.add_argument('--span-end-encode-layers', type=int, default=1,
+                       help='Number of span end encoding layers')
+    bidaf.add_argument('--use-char-emb', type='bool', default=False,
+                       help='Whether to use char embeddings')
+    bidaf.add_argument('--char-embedding-dim', type=int, default=-1,
+                       help='Char embedding size, -1 for not use char embedding')
+    bidaf.add_argument('--char-cnn-num-filters', type=int, default=-1,
+                       help='Char cnn filter nums of each cnn layer, -1 for not use char embedding')
+    bidaf.add_argument('--char-cnn-ngram-filter-sizes', nargs='+',
+                       help='Char cnn filter sizes, -1 for not use char embedding')
+    bidaf.add_argument('--highway-layers', type=int, default=2,
+                       help='highway layers for embeddings')
+
     # Optimization details
-    optim = parser.add_argument_group('DrQA Reader Optimization')
+    optim = parser.add_argument_group('Reader Optimization')
     optim.add_argument('--dropout-emb', type=float, default=0.4,
                        help='Dropout rate for word embeddings')
     optim.add_argument('--dropout-rnn', type=float, default=0.4,
@@ -96,10 +112,10 @@ def add_model_args(parser):
 
 
 def get_model_args(args):
-    """Filter args for model ones.
+    """Filter args for module ones.
 
     From a args Namespace, return a new Namespace with *only* the args specific
-    to the model architecture or optimization. (i.e. the ones defined here.)
+    to the module architecture or optimization. (i.e. the ones defined here.)
     """
     global MODEL_ARCHITECTURE, MODEL_OPTIMIZER
     required_args = MODEL_ARCHITECTURE | MODEL_OPTIMIZER
@@ -110,10 +126,10 @@ def get_model_args(args):
 def override_model_args(old_args, new_args):
     """Set args to new parameters.
 
-    Decide which model args to keep and which to override when resolving a set
+    Decide which module args to keep and which to override when resolving a set
     of saved args and new args.
 
-    We keep the new optimation, but leave the model architecture alone.
+    We keep the new optimation, but leave the module architecture alone.
     """
     global MODEL_OPTIMIZER
     old_args, new_args = vars(old_args), vars(new_args)

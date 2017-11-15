@@ -38,8 +38,8 @@ def str2bool(v):
 
 
 def add_train_args(parser):
-    """Adds commandline arguments pertaining to training a model. These
-    are different from the arguments dictating the model architecture.
+    """Adds commandline arguments pertaining to training a module. These
+    are different from the arguments dictating the module architecture.
     """
     parser.register('type', 'bool', str2bool)
 
@@ -65,10 +65,10 @@ def add_train_args(parser):
 
     # Files
     files = parser.add_argument_group('Filesystem')
-    files.add_argument('--model-dir', type=str, default=MODEL_DIR,
+    files.add_argument('--module-dir', type=str, default=MODEL_DIR,
                        help='Directory for saved models/checkpoints/logs')
-    files.add_argument('--model-name', type=str, default='',
-                       help='Unique model identifier (.mdl, .txt, .checkpoint)')
+    files.add_argument('--module-name', type=str, default='',
+                       help='Unique module identifier (.mdl, .txt, .checkpoint)')
     files.add_argument('--data-dir', type=str, default=DATA_DIR,
                        help='Directory of training/validation data')
     files.add_argument('--train-file', type=str,
@@ -85,15 +85,21 @@ def add_train_args(parser):
     files.add_argument('--embedding-file', type=str,
                        default='glove.840B.300d.txt',
                        help='Space-separated pretrained embeddings file')
+    files.add_argument('--false-result-file', type=str,
+                       default='_dev_em_false.json',
+                       help='Not exact match result file')
+    files.add_argument('--prediction_file', type=str,
+                       default='_dev_prediction.json',
+                       help='Prediction of dev set file')
 
     # Saving + loading
     save_load = parser.add_argument_group('Saving/Loading')
     save_load.add_argument('--checkpoint', type='bool', default=False,
-                           help='Save model + optimizer state after each epoch')
+                           help='Save module + optimizer state after each epoch')
     save_load.add_argument('--pretrained', type=str, default='',
-                           help='Path to a pretrained model to warm-start with')
+                           help='Path to a pretrained module to warm-start with')
     save_load.add_argument('--expand-dictionary', type='bool', default=False,
-                           help='Expand dictionary of pretrained model to ' +
+                           help='Expand dictionary of pretrained module to ' +
                                 'include training/dev words of new data')
     # Data preprocessing
     preprocess = parser.add_argument_group('Preprocessing')
@@ -109,7 +115,7 @@ def add_train_args(parser):
     general.add_argument('--official-eval', type='bool', default=True,
                          help='Validate with official SQuAD eval')
     general.add_argument('--valid-metric', type=str, default='f1',
-                         help='The evaluation metric used for model selection')
+                         help='The evaluation metric used for module selection')
     general.add_argument('--display-iter', type=int, default=25,
                          help='Log state after every <display_iter> epochs')
     general.add_argument('--sort-by-len', type='bool', default=True,
@@ -133,19 +139,20 @@ def set_defaults(args):
         if not os.path.isfile(args.embedding_file):
             raise IOError('No such file: %s' % args.embedding_file)
 
-    # Set model directory
+    # Set module directory
     subprocess.call(['mkdir', '-p', args.model_dir])
 
-    # Set model name
+    # Set module name
     if not args.model_name:
         import uuid
         import time
-        args.model_name = time.strftime("%Y%m%d-") + str(uuid.uuid4())[:8]
+        args.model_name = time.strftime("%Y%m%d-") + str(uuid.uuid4())[:8] + '_' + str(args.model_type)
 
-    # Set log + model file names
+    # Set log + module file names
     args.log_file = os.path.join(args.model_dir, args.model_name + '.txt')
     args.model_file = os.path.join(args.model_dir, args.model_name + '.mdl')
-
+    args.false_result_file = os.path.join(args.model_dir, args.model_name + args.false_result_file)
+    args.prediction_file = os.path.join(args.model_dir, args.model_name + args.prediction_file)
     # Embeddings options
     if args.embedding_file:
         with open(args.embedding_file) as f:
@@ -175,7 +182,7 @@ def set_defaults(args):
 
 
 def init_from_scratch(args, train_exs, dev_exs):
-    """New model, new data, new dictionary."""
+    """New module, new data, new dictionary."""
     # Create a feature dict out of the annotations in the data
     logger.info('-' * 100)
     logger.info('Generate features')
@@ -189,8 +196,17 @@ def init_from_scratch(args, train_exs, dev_exs):
     word_dict = utils.build_word_dict(args, train_exs + dev_exs)
     logger.info('Num words = %d' % len(word_dict))
 
-    # Initialize model
-    model = DocReader(config.get_model_args(args), word_dict, feature_dict)
+    if args.use_char_emb:
+        # Build a character dictionary from the data questions + words (train/dev splits)
+        logger.info('-' * 100)
+        logger.info('Build character dictionary')
+        character_dict = utils.build_character_dict(args, train_exs + dev_exs)
+        logger.info('Num character = %d' % len(character_dict))
+        # Initialize module
+        model = DocReader(config.get_model_args(args), word_dict, feature_dict, character_dict)
+    else:
+        # Initialize module
+        model = DocReader(config.get_model_args(args), word_dict, feature_dict)
 
     # Load pretrained embeddings for words in dictionary
     if args.embedding_file:
@@ -205,7 +221,7 @@ def init_from_scratch(args, train_exs, dev_exs):
 
 
 def train(args, data_loader, model, global_stats):
-    """Run through one epoch of model training with the provided data loader."""
+    """Run through one epoch of module training with the provided data loader."""
     # Initialize meters + timers
     train_loss = utils.AverageMeter()
     epoch_time = utils.Timer()
@@ -213,7 +229,6 @@ def train(args, data_loader, model, global_stats):
     # Run one epoch
     for idx, ex in enumerate(data_loader):
         train_loss.update(*model.update(ex))
-
         if idx % args.display_iter == 0:
             logger.info('train: Epoch = %d | iter = %d/%d | ' %
                         (global_stats['epoch'], idx, len(data_loader)) +
@@ -225,7 +240,8 @@ def train(args, data_loader, model, global_stats):
                 (global_stats['epoch'], epoch_time.time()))
 
     # Checkpoint
-    if args.checkpoint:
+    if args.checkpoint  and global_stats['epoch'] == args.num_epochs - 1:
+        print('saving module...')
         model.checkpoint(args.model_file + '.checkpoint',
                          global_stats['epoch'] + 1)
 
@@ -273,7 +289,7 @@ def validate_unofficial(args, data_loader, model, global_stats, mode):
 
 
 def validate_official(args, data_loader, model, global_stats,
-                      offsets, texts, answers):
+                      offsets, texts, questions, answers):
     """Run one full official validation. Uses exact spans and same
     exact match/F1 score computation as in the SQuAD script.
 
@@ -288,6 +304,8 @@ def validate_official(args, data_loader, model, global_stats,
 
     # Run through examples
     examples = 0
+    em_false = {}  # cid -> (context, [(qid, question, answer)...])
+    predictions = {}  # qid -> prediction
     for ex in data_loader:
         ex_id, batch_size = ex[-1], ex[0].size(0)
         pred_s, pred_e, _ = model.predict(ex)
@@ -295,12 +313,31 @@ def validate_official(args, data_loader, model, global_stats,
         for i in range(batch_size):
             s_offset = offsets[ex_id[i]][pred_s[i][0]][0]
             e_offset = offsets[ex_id[i]][pred_e[i][0]][1]
-            prediction = texts[ex_id[i]][s_offset:e_offset]
+            prediction = texts[ex_id[i]][1][s_offset:e_offset]
+            cid = texts[ex_id[i]][0]
+            predictions[ex_id[i]] = prediction
 
             # Compute metrics
             ground_truths = answers[ex_id[i]]
-            exact_match.update(utils.metric_max_over_ground_truths(
-                utils.exact_match_score, prediction, ground_truths))
+
+            em_score = utils.metric_max_over_ground_truths(
+                utils.exact_match_score, prediction, ground_truths)
+            if em_score < 1:
+                if cid not in em_false:
+                    em_false[cid] = {
+                        'text': texts[ex_id[i]][1],
+                        'qa': [{'qid': ex_id[i],
+                            'question': questions[ex_id[i]],
+                            'answers': answers[ex_id[i]],
+                            'prediction': prediction}]
+                    }
+                else:
+                    em_false[cid]['qa'].append({'qid': ex_id[i],
+                            'question': questions[ex_id[i]],
+                            'answers': answers[ex_id[i]],
+                            'prediction': prediction})
+
+            exact_match.update(em_score)
             f1.update(utils.metric_max_over_ground_truths(
                 utils.f1_score, prediction, ground_truths))
 
@@ -311,8 +348,16 @@ def validate_official(args, data_loader, model, global_stats,
                 'F1 = %.2f | examples = %d | valid time = %.2f (s)' %
                 (f1.avg * 100, examples, eval_time.time()))
 
-    return {'exact_match': exact_match.avg * 100, 'f1': f1.avg * 100}
+    return {'exact_match': exact_match.avg * 100, 'f1': f1.avg * 100}, em_false, predictions
 
+def write_wrong_results(filename, em_false_qa):
+    with open(filename, 'w') as f:
+        for (k, v) in em_false_qa.items():
+            f.write(json.dumps(v) + '\n')
+
+def write_results(filename, predictions):
+    with open(filename, 'w') as f:
+        f.write(json.dumps(predictions))
 
 def eval_accuracies(pred_s, target_s, pred_e, target_e):
     """An unofficial evalutation helper.
@@ -360,6 +405,7 @@ def main(args):
     # DATA
     logger.info('-' * 100)
     logger.info('Load data files')
+    # load data directly
     train_exs = utils.load_data(args, args.train_file, skip_no_answer=True)
     logger.info('Num train examples = %d' % len(train_exs))
     dev_exs = utils.load_data(args, args.dev_file)
@@ -369,9 +415,10 @@ def main(args):
     # 1) Load the original text to retrieve spans from offsets.
     # 2) Load the (multiple) text answers for each question.
     if args.official_eval:
-        dev_texts = utils.load_text(args.dev_json)
+        dev_texts = utils.load_text_with_id(args.dev_json)  # dict with qid as key, contexts as value
         dev_offsets = {ex['id']: ex['offsets'] for ex in dev_exs}
-        dev_answers = utils.load_answers(args.dev_json)
+        dev_answers = utils.load_answers(args.dev_json)  # dict with qid as key, answer as value
+        dev_questions = utils.load_questions(args.dev_json)
 
     # --------------------------------------------------------------------------
     # MODEL
@@ -383,10 +430,10 @@ def main(args):
         checkpoint_file = args.model_file + '.checkpoint'
         model, start_epoch = DocReader.load_checkpoint(checkpoint_file, args)
     else:
-        # Training starts fresh. But the model state is either pretrained or
+        # Training starts fresh. But the module state is either pretrained or
         # newly (randomly) initialized.
         if args.pretrained:
-            logger.info('Using pretrained model...')
+            logger.info('Using pretrained module...')
             model = DocReader.load(args.pretrained, args)
             if args.expand_dictionary:
                 logger.info('Expanding dictionary for new data...')
@@ -398,7 +445,7 @@ def main(args):
                     model.load_embeddings(added, args.embedding_file)
 
         else:
-            logger.info('Training model from scratch...')
+            logger.info('Training module from scratch...')
             model = init_from_scratch(args, train_exs, dev_exs)
 
         # Set up partial tuning of embeddings
@@ -488,8 +535,8 @@ def main(args):
 
         # Validate official
         if args.official_eval:
-            result = validate_official(args, dev_loader, model, stats,
-                                       dev_offsets, dev_texts, dev_answers)
+            result, em_false_qa, predictions = validate_official(args, dev_loader, model, stats,
+                                       dev_offsets, dev_texts, dev_questions, dev_answers)
 
         # Save best valid
         if result[args.valid_metric] > stats['best_valid']:
@@ -497,6 +544,8 @@ def main(args):
                         (args.valid_metric, result[args.valid_metric],
                          stats['epoch'], model.updates))
             model.save(args.model_file)
+            write_wrong_results(args.false_result_file, em_false_qa)
+            write_results(args.prediction_file, predictions)
             stats['best_valid'] = result[args.valid_metric]
 
 
@@ -509,6 +558,16 @@ if __name__ == '__main__':
     add_train_args(parser)
     config.add_model_args(parser)
     args = parser.parse_args()
+
+    if args.model_type is not 'drqa':
+        # read file
+        with open(args.model_type + '.settings') as f:
+            settings = []
+            for line in f.readlines():
+                ps = line.strip().split()
+                settings = settings + ps
+            args = parser.parse_args(settings)
+
     set_defaults(args)
 
     # Set cuda

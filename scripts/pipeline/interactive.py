@@ -24,10 +24,10 @@ console.setFormatter(fmt)
 logger.addHandler(console)
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--reader-model', type=str, default=None,
-                    help='Path to trained Document Reader model')
-parser.add_argument('--retriever-model', type=str, default=None,
-                    help='Path to Document Retriever model (tfidf)')
+parser.add_argument('--reader-module', type=str, default=None,
+                    help='Path to trained Document Reader module')
+parser.add_argument('--retriever-module', type=str, default=None,
+                    help='Path to Document Retriever module (tfidf)')
 parser.add_argument('--doc-db', type=str, default=None,
                     help='Path to Document DB')
 parser.add_argument('--tokenizer', type=str, default=None,

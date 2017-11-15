@@ -43,21 +43,21 @@ def tokenize(text):
 
 
 class Predictor(object):
-    """Load a pretrained DocReader model and predict inputs on the fly."""
+    """Load a pretrained DocReader module and predict inputs on the fly."""
 
     def __init__(self, model=None, tokenizer=None, normalize=True,
                  embedding_file=None, num_workers=None):
         """
         Args:
-            model: path to saved model file.
+            model: path to saved module file.
             tokenizer: option string to select tokenizer class.
             normalize: squash output score to 0-1 probabilities with a softmax.
             embedding_file: if provided, will expand dictionary to use all
               available pretrained vectors in this file.
             num_workers: number of CPU processes to use to preprocess batches.
         """
-        logger.info('Initializing model...')
-        self.model = DocReader.load(model or DEFAULTS['model'],
+        logger.info('Initializing module...')
+        self.model = DocReader.load(model or DEFAULTS['module'],
                                     normalize=normalize)
 
         if embedding_file:
@@ -124,7 +124,7 @@ class Predictor(object):
             candidates = [{'input': d_tokens[i], 'cands': candidates[i]}
                           for i in range(len(candidates))]
 
-        # Build the batch and run it through the model
+        # Build the batch and run it through the module
         batch_exs = batchify([vectorize(e, self.model) for e in examples])
         s, e, score = self.model.predict(batch_exs, candidates, top_n)
 

@@ -4,7 +4,7 @@
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
-"""A script to make and save model predictions on an input dataset."""
+"""A script to make and save module predictions on an input dataset."""
 
 import os
 import time
@@ -26,14 +26,14 @@ logger.addHandler(console)
 parser = argparse.ArgumentParser()
 parser.add_argument('dataset', type=str, default=None,
                     help='SQuAD-like dataset to evaluate on')
-parser.add_argument('--model', type=str, default=None,
-                    help='Path to model to use')
+parser.add_argument('--module', type=str, default=None,
+                    help='Path to module to use')
 parser.add_argument('--embedding-file', type=str, default=None,
                     help=('Expand dictionary to use all pretrained '
                           'embeddings in this file.'))
 parser.add_argument('--out-dir', type=str, default='/tmp',
                     help=('Directory to write prediction file to '
-                          '(<dataset>-<model>.preds)'))
+                          '(<dataset>-<module>.preds)'))
 parser.add_argument('--tokenizer', type=str, default=None,
                     help=("String option specifying tokenizer type to use "
                           "(e.g. 'corenlp')"))
