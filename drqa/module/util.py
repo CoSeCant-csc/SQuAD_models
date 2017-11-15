@@ -314,7 +314,7 @@ def last_dim_softmax(tensor: torch.Tensor, mask: Optional[torch.Tensor] = None) 
     if mask is not None:
         while mask.dim() < tensor.dim():
             mask = mask.unsqueeze(1)
-        mask = mask.expand_as(tensor).contiguous().float()
+        mask = mask.expand_as(tensor).contiguous()
         mask = mask.view(-1, mask.size()[-1])
     reshaped_result = masked_softmax(reshaped_tensor, mask)
     return reshaped_result.view(*tensor_shape)
@@ -426,8 +426,8 @@ def replace_masked_values(tensor: Variable, mask: Variable, replace_with: float)
     # the `replace_with` value.
     if tensor.dim() != mask.dim():
         raise ConfigurationError("tensor.dim() (%d) != mask.dim() (%d)" % (tensor.dim(), mask.dim()))
-    one_minus_mask = 1.0 - mask
-    values_to_add = replace_with * mask
+    one_minus_mask = 1.0 - mask.float()
+    values_to_add = replace_with * mask.float()
     return tensor * one_minus_mask + values_to_add
 
 
