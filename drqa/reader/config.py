@@ -18,6 +18,11 @@ MODEL_ARCHITECTURE = {
     'use_qemb', 'use_in_question', 'use_pos', 'use_ner', 'use_lemma', 'use_tf'
 }
 
+BIDAF_ARCHITECTURE = {
+    'modeling_layers', 'span_end_encode_layers', 'use_char_emb', 'char_embedding_dim',
+    'char_cnn_num_filters', 'char_cnn_ngram_filter_sizes', 'highway_layers'
+}
+
 # Index of arguments concerning the module optimizer/training
 MODEL_OPTIMIZER = {
     'fix_embeddings', 'optimizer', 'learning_rate', 'momentum', 'weight_decay',
@@ -117,8 +122,8 @@ def get_model_args(args):
     From a args Namespace, return a new Namespace with *only* the args specific
     to the module architecture or optimization. (i.e. the ones defined here.)
     """
-    global MODEL_ARCHITECTURE, MODEL_OPTIMIZER
-    required_args = MODEL_ARCHITECTURE | MODEL_OPTIMIZER
+    global MODEL_ARCHITECTURE, MODEL_OPTIMIZER, BIDAF_ARCHITECTURE
+    required_args = MODEL_ARCHITECTURE | MODEL_OPTIMIZER | BIDAF_ARCHITECTURE
     arg_values = {k: v for k, v in vars(args).items() if k in required_args}
     return argparse.Namespace(**arg_values)
 
