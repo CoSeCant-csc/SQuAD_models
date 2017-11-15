@@ -33,6 +33,7 @@ logger = logging.getLogger()
 DATA_DIR = os.path.join(DRQA_DATA, 'datasets')
 MODEL_DIR = '/tmp/drqa-models/'
 EMBED_DIR = os.path.join(DRQA_DATA, 'embeddings')
+READER_DIR = os.path.join(DRQA_SCRIPTS, 'reader')
 
 def str2bool(v):
     return v.lower() in ('yes', 'true', 't', '1', 'y')
@@ -562,7 +563,7 @@ if __name__ == '__main__':
 
     if args.model_type is not 'drqa':
         # read file
-        with open(os.path.join(DRQA_SCRIPTS, args.model_type + '.settings')) as f:
+        with open(os.path.join(READER_DIR, args.model_type + '.settings')) as f:
             settings = []
             for line in f.readlines():
                 ps = line.strip().split()
