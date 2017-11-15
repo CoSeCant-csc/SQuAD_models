@@ -1,4 +1,4 @@
---batch-size 20
+--batch-size 16
 --model-type bidaf
 --tune-partial 1000
 --concat-rnn-layers False
