@@ -16,6 +16,10 @@ DATA_DIR = (
     os.getenv('DRQA_DATA') or
     os.path.join(PosixPath(__file__).absolute().parents[1].as_posix(), 'data')
 )
+SCRIPTS_DIR = (
+    os.getenv('DRQA_SCRIPTS') or
+    os.path.join(PosixPath(__file__).absolute().parents[1].as_posix(), 'scripts')
+)
 
 from . import tokenizers
 from . import reader

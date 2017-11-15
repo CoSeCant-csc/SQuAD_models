@@ -19,6 +19,7 @@ import logging
 from drqa.reader import utils, vector, config, data
 from drqa.reader import DocReader
 from drqa import DATA_DIR as DRQA_DATA
+from drqa import SCRIPTS_DIR as DRQA_SCRIPTS
 
 logger = logging.getLogger()
 
@@ -561,7 +562,7 @@ if __name__ == '__main__':
 
     if args.model_type is not 'drqa':
         # read file
-        with open(args.model_type + '.settings') as f:
+        with open(os.path.join(DRQA_SCRIPTS, args.model_type + '.settings')) as f:
             settings = []
             for line in f.readlines():
                 ps = line.strip().split()
