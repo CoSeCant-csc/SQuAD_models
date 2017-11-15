@@ -92,9 +92,12 @@ def batchify(batch):
     NUM_EXTRA = 1
 
     ids = [ex[-1] for ex in batch]
-    docs, docs_chars = [ex[0] for ex in batch]
+    docs = [ex[0][0] for ex in batch]
+    docs_chars = [ex[0][1] for ex in batch]
     features = [ex[1] for ex in batch]
-    questions, questions_chars = [ex[2] for ex in batch]
+    questions = [ex[2][0] for ex in batch]
+    questions_chars = [ex[2][1] for ex in batch]
+
 
     # Batch documents and features
     max_length = max([d.size(0) for d in docs])
