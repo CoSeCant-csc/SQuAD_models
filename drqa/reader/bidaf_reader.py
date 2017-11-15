@@ -221,4 +221,8 @@ class BidafDocReader(nn.Module):
         # Shape: (batch_size, len_d)
         span_end_probs = util.masked_softmax(span_end_logits, x1_mask)
 
+        if self.training:
+            span_start_probs = util.masked_log_softmax(span_start_logits, x1_mask)
+            span_end_probs = util.masked_log_softmax(span_end_logits, x1_mask)
+
         return span_start_probs, span_end_probs

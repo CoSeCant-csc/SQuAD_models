@@ -185,7 +185,7 @@ def masked_log_softmax(vector, mask):
     case, anyway, so it shouldn't matter.
     """
     if mask is not None:
-        vector = vector + mask.log()
+        vector.data.masked_fill_(mask.data, -float('inf'))
     return torch.nn.functional.log_softmax(vector)
 
 
