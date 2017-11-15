@@ -41,7 +41,7 @@ class BidafDocReader(nn.Module):
         self.highway_layer = TimeDistributed(Highway(args.embedding_dim + args.char_cnn_embedding_dim,
                                                      args.highway_layers))
         # Input size to RNN: word emb + cnn emb + manual features
-        highway_output_size = 2 * (args.embedding_dim + args.char_cnn_embedding_dim)
+        highway_output_size = args.embedding_dim + args.char_cnn_embedding_dim
         doc_input_size = highway_output_size + args.num_features
 
         # RNN document encoder
