@@ -27,7 +27,8 @@ BIDAF_ARCHITECTURE = {
 MODEL_OPTIMIZER = {
     'fix_embeddings', 'optimizer', 'learning_rate', 'momentum', 'weight_decay',
     'rnn_padding', 'dropout_rnn', 'dropout_rnn_output', 'dropout_emb',
-    'max_len', 'grad_clipping', 'tune_partial'
+    'max_len', 'grad_clipping', 'tune_partial', 'learning_rate_scheduler',
+    'learning_rate_patience', 'learning_rate_factor'
 }
 
 
