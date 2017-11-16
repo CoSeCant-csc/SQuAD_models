@@ -550,6 +550,11 @@ def main(args):
             write_results(args.prediction_file, predictions)
             stats['best_valid'] = result[args.valid_metric]
 
+        # update learning rate
+        if args.learning_rate_scheduler:
+            logger.info('Updating learning rate using torch.optim.lr_scheduler.ReduceLROnPlateau')
+            em = result['exact_match']
+            model.update_learning_rate(em)
 
 if __name__ == '__main__':
     # Parse cmdline args and setup environment

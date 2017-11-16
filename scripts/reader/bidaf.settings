@@ -20,3 +20,9 @@
 --char-cnn-num-filters 100
 --char-cnn-ngram-filter-sizes 5
 --highway-layers 2
+
+--grad-clipping 5.0
+
+--learning-rate-scheduler True
+--learning-rate-factor 0.5
+--learning-rate-patience 2

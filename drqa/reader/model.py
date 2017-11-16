@@ -8,6 +8,7 @@
 
 import torch
 import torch.optim as optim
+import torch.optim.lr_scheduler
 import torch.nn.functional as F
 import numpy as np
 import logging
@@ -196,6 +197,15 @@ class DocReader(object):
         else:
             raise RuntimeError('Unsupported optimizer: %s' %
                                self.args.optimizer)
+        if self.args.learning_rate_scheduler:
+            patience = self.args.learning_rate_patience
+            factor = self.args.learning_rate_factor
+            self.learning_rate_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer,
+                                                                                      mode='max',
+                                                                                      factor=factor,
+                                                                                      patience=patience)
+    def update_learning_rate(self, metrics):
+        self.learning_rate_scheduler.step(mertics)
 
     # --------------------------------------------------------------------------
     # Learning

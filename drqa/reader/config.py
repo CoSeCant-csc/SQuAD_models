@@ -114,6 +114,12 @@ def add_model_args(parser):
                        help='Explicitly account for padding in RNN encoding')
     optim.add_argument('--max-len', type=int, default=15,
                        help='The max span allowed during decoding')
+    optim.add_argument('--learning-rate-scheduler', type=bool, default=False,
+                       help='Use which learning rate scheduler, None means do not use scheduler')
+    optim.add_argument('--learning-rate-factor', type=float, default=0.5,
+                       help='Factor by which the learning rate will be reduced')
+    optim.add_argument('--learning-rate-patience', type=int, default=2,
+                       help='Number of epochs with no improvement after which learning rate will be reduced.')
 
 
 def get_model_args(args):
