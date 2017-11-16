@@ -1,7 +1,10 @@
+--num-epochs 40
 --batch-size 32
 --test-batch-size 64
+
 --model-type bidaf
 --tune-partial 1000
+
 --concat-rnn-layers False
 --doc-layers 1
 --question-layers 1
@@ -22,7 +25,6 @@
 --highway-layers 2
 
 --grad-clipping 5.0
-
 --learning-rate-scheduler True
 --learning-rate-factor 0.5
 --learning-rate-patience 2

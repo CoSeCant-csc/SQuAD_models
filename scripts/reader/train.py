@@ -242,7 +242,7 @@ def train(args, data_loader, model, global_stats):
                 (global_stats['epoch'], epoch_time.time()))
 
     # Checkpoint
-    if args.checkpoint  and global_stats['epoch'] == args.num_epochs - 1:
+    if args.checkpoint:
         print('saving module...')
         model.checkpoint(args.model_file + '.checkpoint',
                          global_stats['epoch'] + 1)

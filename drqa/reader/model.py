@@ -454,6 +454,7 @@ class DocReader(object):
             'state_dict': state_dict,
             'word_dict': self.word_dict,
             'feature_dict': self.feature_dict,
+            'character_dict': self.character_dict,
             'args': self.args,
         }
         try:
@@ -466,6 +467,7 @@ class DocReader(object):
             'state_dict': self.network.state_dict(),
             'word_dict': self.word_dict,
             'feature_dict': self.feature_dict,
+            'character_dict': self.character_dict,
             'args': self.args,
             'epoch': epoch,
             'optimizer': self.optimizer.state_dict(),
@@ -483,11 +485,12 @@ class DocReader(object):
         )
         word_dict = saved_params['word_dict']
         feature_dict = saved_params['feature_dict']
+        character_dict = saved_params['character_dict']
         state_dict = saved_params['state_dict']
         args = saved_params['args']
         if new_args:
             args = override_model_args(args, new_args)
-        return DocReader(args, word_dict, feature_dict, state_dict, normalize)
+        return DocReader(args, word_dict, feature_dict, character_dict, state_dict, normalize)
 
     @staticmethod
     def load_checkpoint(filename, normalize=True):
@@ -501,7 +504,7 @@ class DocReader(object):
         epoch = saved_params['epoch']
         optimizer = saved_params['optimizer']
         args = saved_params['args']
-        model = DocReader(args, word_dict, feature_dict, state_dict, normalize)
+        model = DocReader(args, word_dict, feature_dict, character_dict, state_dict, normalize)
         model.init_optimizer(optimizer)
         return model, epoch
 
