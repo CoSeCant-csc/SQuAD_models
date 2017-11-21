@@ -49,7 +49,7 @@ def add_train_args(parser):
     runtime = parser.add_argument_group('Environment')
     runtime.add_argument('--no-cuda', type='bool', default=False,
                          help='Train on CPU, even if GPUs are available.')
-    runtime.add_argument('--gpu', type=int, default=-1,
+    runtime.add_argument('--gpu', type=int, default=0,
                          help='Run on a specific GPU')
     runtime.add_argument('--data-workers', type=int, default=5,
                          help='Number of subprocesses for data loading')

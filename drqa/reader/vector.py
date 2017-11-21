@@ -93,11 +93,12 @@ def batchify(batch):
 
     ids = [ex[-1] for ex in batch]
     docs = [ex[0][0] for ex in batch]
-    docs_chars = [ex[0][1] for ex in batch]
+    docs_chars = [ex[0][1] for ex in batch if ex[0][1] is not None]
     features = [ex[1] for ex in batch]
     questions = [ex[2][0] for ex in batch]
-    questions_chars = [ex[2][1] for ex in batch]
+    questions_chars = [ex[2][1] for ex in batch if ex[2][1] is not None]
 
+    use_chars = True if len(docs_chars) > 0 else False
 
     # Batch documents and features
     max_length = max([d.size(0) for d in docs])
@@ -114,14 +115,15 @@ def batchify(batch):
             x1_f[i, :d.size(0)].copy_(features[i])
 
     # Batch chars of documents
-    if docs_chars:
+    if use_chars:
         max_chars_length = max([w.size(0) for d in docs_chars for w in d])
         x1_char = torch.LongTensor(len(docs), max_length, max_chars_length).zero_()
         x1_char_mask = torch.ByteTensor(len(docs), max_length, max_chars_length).fill_(1)
-    for i, d in enumerate(docs_chars):
-        for j, w in enumerate(d):
-            x1_char[i, j, :w.size(0)].copy_(w)
-            x1_char_mask[i, j, :w.size(0)].fill_(0)
+
+        for i, d in enumerate(docs_chars):
+            for j, w in enumerate(d):
+                x1_char[i, j, :w.size(0)].copy_(w)
+                x1_char_mask[i, j, :w.size(0)].fill_(0)
 
     # Batch questions
     max_length = max([q.size(0) for q in questions])
@@ -156,7 +158,7 @@ def batchify(batch):
     else:
         raise RuntimeError('Incorrect number of inputs per example.')
 
-    if docs_chars and questions_chars:
+    if use_chars:
         return x1, x1_mask, x1_char, x1_char_mask, x1_f, x2, x2_mask, x2_char, x2_char_mask, y_s, y_e, ids
 
     return x1, x1_f, x1_mask, x2, x2_mask, y_s, y_e, ids

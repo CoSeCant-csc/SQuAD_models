@@ -49,11 +49,11 @@ class DocReader(object):
 
         # Building network. If normalize if false, scores are not normalized
         # 0-1 per paragraph (no softmax).
-        if args.model_type.lower() == 'drpa':
+        if args.model_type.lower() == 'drqa':
             self.network = RnnDocReader(args, normalize)
-        if args.model_type.lower() == 'mlstm':
+        elif args.model_type.lower() == 'mlstm':
             self.network = mLSTMDocReader(args, normalize)
-        if args.model_type.lower() == 'bidaf':
+        elif args.model_type.lower() == 'bidaf':
             self.network = BidafDocReader(args, normalize)
         else:
             raise RuntimeError('Unsupported module: %s' % args.model_type)
@@ -205,7 +205,7 @@ class DocReader(object):
                                                                                       factor=factor,
                                                                                       patience=patience)
     def update_learning_rate(self, metrics):
-        self.learning_rate_scheduler.step(mertics)
+        self.learning_rate_scheduler.step(metrics)
 
     # --------------------------------------------------------------------------
     # Learning

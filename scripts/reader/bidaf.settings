@@ -1,4 +1,4 @@
---num-epochs 40
+--num-epochs 80
 --batch-size 32
 --test-batch-size 64
 
