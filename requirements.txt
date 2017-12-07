@@ -1,3 +1,4 @@
+cove
 numpy
 scikit-learn
 termcolor

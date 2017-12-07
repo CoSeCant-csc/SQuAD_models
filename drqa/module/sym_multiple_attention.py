@@ -5,10 +5,10 @@ A ``Module`` that takes two matrices as input and returns a matrix of attentions
 import torch
 from overrides import overrides
 
-from drqa.module.similarity_functions import DotProductSimilarity, SimilarityFunction
+from drqa.module.similarity_functions import symmetric_bilinear, SimilarityFunction
 
 
-class MatrixAttention(torch.nn.Module):
+class SymMultipleAttention(torch.nn.Module):
     '''
     This ``Module`` takes two matrices as input and returns a matrix of attentions.
 
@@ -36,9 +36,9 @@ class MatrixAttention(torch.nn.Module):
         The similarity function to use when computing the attention.
     '''
     def __init__(self, similarity_function: SimilarityFunction = None) -> None:
-        super(MatrixAttention, self).__init__()
+        super(SymMultipleAttention, self).__init__()
 
-        self._similarity_function = similarity_function or DotProductSimilarity()
+        self._similarity_function = similarity_function or symmetric_bilinear()
 
     @overrides
     def forward(self, matrix_1: torch.Tensor, matrix_2: torch.Tensor) -> torch.Tensor:

@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 MODEL_ARCHITECTURE = {
     'model_type', 'embedding_dim', 'hidden_size', 'doc_layers',
     'question_layers', 'rnn_type', 'concat_rnn_layers', 'question_merge',
-    'use_qemb', 'use_in_question', 'use_pos', 'use_ner', 'use_lemma', 'use_tf'
+    'use_qemb', 'use_in_question', 'use_pos', 'use_ner', 'use_lemma', 'use_tf', 'use_cove'
 }
 
 BIDAF_ARCHITECTURE = {
@@ -72,6 +72,14 @@ def add_model_args(parser):
                         help='Whether to use lemma features')
     detail.add_argument('--use-tf', type='bool', default=True,
                         help='Whether to use term frequency features')
+
+    fusion_net = parser.add_argument_group('FusionNet Reader Config')
+    fusion_net.add_argument('--use-cove', type='bool', default=False,
+                            help='Whether to use cove embeddings')
+    fusion_net.add_argument('--cove-embedding-dim', type=int, default=300,
+                            help='Embedding of CoVe')
+    fusion_net.add_argument('--attention-size', type=int, default=250,
+                            help='Attention hidden size')
 
     bidaf = parser.add_argument_group('BiDAF Reader Config')
     bidaf.add_argument('--modeling-layers', type=int, default=2,

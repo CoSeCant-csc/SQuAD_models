@@ -16,7 +16,7 @@ from ..module.similarity_functions import LinearSimilarity
 class BidafDocReader(nn.Module):
     RNN_TYPES = {'lstm': nn.LSTM, 'gru': nn.GRU, 'rnn': nn.RNN}
 
-    def __init__(self, args, normalize=True):
+    def __init__(self, args):
         super(BidafDocReader, self).__init__()
         # Store config
         self.args = args
