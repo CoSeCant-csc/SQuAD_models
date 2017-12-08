@@ -158,8 +158,11 @@ class FusionNetReader(nn.Module):
         x1_word_emb = self.embedding(x1)  # [batch, len_d, embedding_dim]
         x2_word_emb = self.embedding(x2)  # [batch, len_q, embedding_dim]
 
-        x1_cove_emb = self.cove_encoder(x1_word_emb)
-        x2_cove_emb = self.cove_encoder(x2_word_emb)
+        x1_lengths = x1_mask.data.eq(0).long().sum(1).squeeze()  # batch
+        x2_lengths = x2_mask.data.eq(0).long().sum(1).squeeze()  # batch
+
+        x1_cove_emb = self.cove_encoder(x1_word_emb, x1_lengths)
+        x2_cove_emb = self.cove_encoder(x2_word_emb, x2_lengths)
 
         x1_emb = torch.cat([x1_word_emb, x1_cove_emb], dim=-1)
         x2_emb = torch.cat([x2_word_emb, x2_cove_emb], dim=-1)
