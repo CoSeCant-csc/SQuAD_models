@@ -256,7 +256,7 @@ class FusionNetReader(nn.Module):
         start_scores = self.start_attn(understanding_doc_hiddens, question_hidden, x1_mask)
         # shape: [batch, 2*hidden_size]
         gru_input = layers.weighted_avg(understanding_doc_hiddens, start_scores)
-        _, memory_hidden = self.start_gru(gru_input, question_hidden)
+        _, memory_hidden = self.start_gru(gru_input.unsqueeze(1), question_hidden)
         end_scores = self.end_attn(understanding_doc_hiddens, memory_hidden, x1_mask)
 
         return start_scores, end_scores
