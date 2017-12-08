@@ -146,7 +146,7 @@ class FusionNetReader(nn.Module):
 
         self.end_attn = layers.BilinearSeqAttn(doc_hidden_size, question_hidden_size)
 
-    def forward(self, x1, x1_mask, x1_f, x2, x2_mask):
+    def forward(self, x1, x1_f, x1_mask, x2, x2_mask):
         """Inputs:
         x1 = document word indices             [batch * len_d]
         x1_mask = document padding mask        [batch * len_d]
