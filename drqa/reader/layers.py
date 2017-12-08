@@ -465,10 +465,10 @@ class BilinearSeqAttn(nn.Module):
     Optionally don't normalize output weights.
     """
 
-    def __init__(self, x_size, y_size, identity=False, normalize=True):
+    def __init__(self, x_size, y_size, identity=False, normalize=True, log_normalize=True):
         super(BilinearSeqAttn, self).__init__()
         self.normalize = normalize
-
+        self.log_normalize = log_normalize
         # If identity is true, we just use a dot product without transformation.
         if not identity:
             self.linear = nn.Linear(y_size, x_size)
@@ -488,7 +488,7 @@ class BilinearSeqAttn(nn.Module):
         xWy = x.bmm(Wy.unsqueeze(2)).squeeze(2)  # Wy.unsqueeze(2)  batch * x_size * 1
         xWy.data.masked_fill_(x_mask.data, -float('inf'))
         if self.normalize:
-            if self.training:
+            if self.training and self.log_normalize:
                 # In training we output log-softmax for NLL
                 alpha = F.log_softmax(xWy)
             else:

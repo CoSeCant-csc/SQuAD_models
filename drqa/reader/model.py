@@ -246,6 +246,7 @@ class DocReader(object):
 
         # Run forward
         score_s, score_e = self.network(*inputs)
+
         print(score_s.size(), score_e.size())
         print("start.max=%f, start.min=%f, start.avg=%f, end.max=%f, end.min=%f, end.avg=%f " %(
               torch.max(score_s.data),

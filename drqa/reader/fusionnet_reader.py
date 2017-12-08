@@ -143,11 +143,11 @@ class FusionNetReader(nn.Module):
         # Question merging
         self.question_self_attn = layers.LinearSeqAttn(question_hidden_size)
 
-        self.start_attn = layers.BilinearSeqAttn(doc_hidden_size, question_hidden_size)
+        self.start_attn = layers.BilinearSeqAttn(doc_hidden_size, question_hidden_size, log_normalize=False)
 
         self.start_gru = nn.GRU(doc_hidden_size, args.hidden_size * 2, batch_first=True)
 
-        self.end_attn = layers.BilinearSeqAttn(doc_hidden_size, question_hidden_size)
+        self.end_attn = layers.BilinearSeqAttn(doc_hidden_size, question_hidden_size, log_normalize=False)
 
     def forward(self, x1, x1_f, x1_mask, x2, x2_mask):
         """Inputs:
@@ -254,7 +254,7 @@ class FusionNetReader(nn.Module):
         question_hidden = layers.weighted_avg(understanding_question_hiddens, q_merge_weights)
 
         # Predict start and end positions
-        # shape: [batch, len_d]
+        # shape: [batch, len_d]  SOFTMAX NOT LOG_SOFTMAX
         start_scores = self.start_attn(understanding_doc_hiddens, question_hidden, x1_mask)
         # shape: [batch, 2*hidden_size]
         gru_input = layers.weighted_avg(understanding_doc_hiddens, start_scores)
@@ -266,4 +266,8 @@ class FusionNetReader(nn.Module):
         # shape: [batch, 2*hidden_size]
         memory_hidden = memory_hidden.squeeze(0)
         end_scores = self.end_attn(understanding_doc_hiddens, memory_hidden, x1_mask)
+        # log start_scores
+        if self.training:
+            start_scores = torch.log(start_scores.add(1e-8))
+            end_scores = torch.log(end_scores.add(1e-8))
         return start_scores, end_scores
