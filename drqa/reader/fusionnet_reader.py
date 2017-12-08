@@ -143,7 +143,7 @@ class FusionNetReader(nn.Module):
 
         self.start_attn = layers.BilinearSeqAttn(doc_hidden_size, question_hidden_size)
 
-        self.start_gru = nn.GRU(doc_hidden_size, args.hidden_size * 2)
+        self.start_gru = nn.GRU(doc_hidden_size, args.hidden_size * 2, batch_first=True)
 
         self.end_attn = layers.BilinearSeqAttn(doc_hidden_size, question_hidden_size)
 
