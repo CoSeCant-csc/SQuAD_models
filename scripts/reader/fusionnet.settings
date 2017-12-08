@@ -1,5 +1,5 @@
 --num-epochs 40
---batch-size 32
+--batch-size 8
 --test-batch-size 64
 
 --model-type fusionnet
@@ -24,7 +24,7 @@
 --dropout-emb 0.4
 --dropout-rnn 0.4
 --dropout-rnn-output True
---fix-embeddings True
---tune-partial 0
+--fix-embeddings False
+--tune-partial 1000
 
 

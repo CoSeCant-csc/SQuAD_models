@@ -30,6 +30,8 @@ class FusionNetReader(nn.Module):
         if args.use_cove and args.embedding_dim == 300:
             # init cove_encoder without additional embeddings
             self.cove_encoder = MTLSTM()  # 300
+            for p in self.cove_encoder.parameters():
+                p.requires_grad = False
 
         if args.use_qemb:
             self.qemb_match = layers.SeqAttnMatch(args.embedding_dim)
