@@ -143,7 +143,7 @@ class FusionNetReader(nn.Module):
 
         self.start_attn = layers.BilinearSeqAttn(doc_hidden_size, question_hidden_size)
 
-        self.start_gru = nn.GRU(doc_hidden_size, args.hidden_size, 1)
+        self.start_gru = nn.GRU(doc_hidden_size, args.hidden_size * 2)
 
         self.end_attn = layers.BilinearSeqAttn(doc_hidden_size, question_hidden_size)
 
@@ -256,7 +256,10 @@ class FusionNetReader(nn.Module):
         start_scores = self.start_attn(understanding_doc_hiddens, question_hidden, x1_mask)
         # shape: [batch, 2*hidden_size]
         gru_input = layers.weighted_avg(understanding_doc_hiddens, start_scores)
-        _, memory_hidden = self.start_gru(gru_input.unsqueeze(1), question_hidden)
+        # shape: [batch, 1, 2*hidden_size]
+        gru_input = gru_input.unsqueeze(1)
+        print(gru_input.size())
+        _, memory_hidden = self.start_gru(gru_input, question_hidden)
         end_scores = self.end_attn(understanding_doc_hiddens, memory_hidden, x1_mask)
 
         return start_scores, end_scores
