@@ -15,7 +15,6 @@ import sys
 import subprocess
 import logging
 
-
 from drqa.reader import utils, vector, config, data
 from drqa.reader import DocReader
 from drqa import DATA_DIR as DRQA_DATA

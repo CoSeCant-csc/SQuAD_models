@@ -19,6 +19,7 @@ from .config import override_model_args
 from .rnn_reader import RnnDocReader
 from .mLSTM_reader import mLSTMDocReader
 from .bidaf_reader import BidafDocReader
+from .fusionnet_reader import FusionNetReader
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +56,8 @@ class DocReader(object):
             self.network = mLSTMDocReader(args, normalize)
         elif args.model_type.lower() == 'bidaf':
             self.network = BidafDocReader(args, normalize)
+        elif args.model_type.lower() == 'fusionnet':
+            self.network = FusionNetReader(args)
         else:
             raise RuntimeError('Unsupported module: %s' % args.model_type)
 

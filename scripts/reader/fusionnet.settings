@@ -1,0 +1,30 @@
+--num-epochs 40
+--batch-size 32
+--test-batch-size 64
+
+--model-type fusionnet
+--embedding-dim 300
+--hidden-size 125
+--doc-layers 1
+--question-layers 1
+--rnn-type lstm
+
+--concat-rnn-layers False
+--use-qemb True
+--use-in-question True
+--use-pos True
+--use-ner True
+--use-lemma True
+--use-tf True
+
+--use-cove True
+--cove-embedding-dim 300
+--attention-size 250
+
+--dropout-emb 0.4
+--dropout-rnn 0.4
+--dropout-rnn-output True
+--fix-embeddings True
+--tune-partial 0
+
+

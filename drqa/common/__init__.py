@@ -1,0 +1,1 @@
+from drqa.common.checks import ConfigurationError

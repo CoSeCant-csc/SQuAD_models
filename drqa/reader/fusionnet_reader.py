@@ -47,6 +47,8 @@ class FusionNetReader(nn.Module):
             input_size=doc_input_size,
             hidden_size=args.hidden_size,
             num_layers=1,
+            dropout_rate=args.dropout_rnn,
+            dropout_output=args.dropout_rnn_output,
             padding=args.rnn_padding
         )
 
@@ -54,6 +56,8 @@ class FusionNetReader(nn.Module):
             input_size=question_input_size,
             hidden_size=args.hidden_size,
             num_layers=1,
+            dropout_rate=args.dropout_rnn,
+            dropout_output=args.dropout_rnn_output,
             padding=args.rnn_padding
         )
 
@@ -62,6 +66,8 @@ class FusionNetReader(nn.Module):
             input_size=args.hidden_size * 2,
             hidden_size=args.hidden_size,
             num_layers=1,
+            dropout_rate=args.dropout_rnn,
+            dropout_output=args.dropout_rnn_output,
             padding=args.rnn_padding
         )
 
@@ -69,6 +75,8 @@ class FusionNetReader(nn.Module):
             input_size=args.hidden_size * 2,
             hidden_size=args.hidden_size,
             num_layers=1,
+            dropout_rate=args.dropout_rnn,
+            dropout_output=args.dropout_rnn_output,
             padding=args.rnn_padding
         )
 
@@ -78,6 +86,8 @@ class FusionNetReader(nn.Module):
             input_size=args.hidden_size * 4,
             hidden_size=args.hidden_size,
             num_layers=1,
+            dropout_rate=args.dropout_rnn,
+            dropout_output=args.dropout_rnn_output,
             padding=args.rnn_padding
         )
 
@@ -132,7 +142,7 @@ class FusionNetReader(nn.Module):
 
         self.start_attn = layers.BilinearSeqAttn(doc_hidden_size, question_hidden_size)
 
-        self.start_gru = nn.GRU(doc_hidden_size, args.hidden_size, 1, num_layers=1, bidirectional=True)
+        self.start_gru = nn.GRU(doc_hidden_size, args.hidden_size, 1)
 
         self.end_attn = layers.BilinearSeqAttn(doc_hidden_size, question_hidden_size)
 
@@ -245,79 +255,3 @@ class FusionNetReader(nn.Module):
         end_scores = self.end_attn(understanding_doc_hiddens, memory_hidden, x1_mask)
 
         return start_scores, end_scores
-
-
-
-
-
-
-
-
-
-        # Encode question with RNN + merge hiddens shape: [batch, len_q, 2*hidden_size]
-        question_hiddens = self.question_rnn(x2_emb, x2_mask)
-
-        # shape: [batch, len_d, len_q]
-        doc_question_similarity = self.matrix_attention(doc_hiddens, question_hiddens)
-        # shape: [batch, len_d, len_q]
-        doc_question_attention = util.last_dim_softmax(doc_question_similarity, x2_mask)  # this mask is reverse of
-        # the allennlp one
-        # shape: [batch, len_d, 2*hidden_size]
-        doc_question_vectors = util.weighted_sum(question_hiddens, doc_question_attention)
-
-        # We replace masked values with something really negative here, so they don't affect the
-        # max below.
-        # shape: [batch, len_d, len_q]
-        masked_similarity = util.replace_masked_values(doc_question_similarity,
-                                                       x2_mask.unsqueeze(1),
-                                                       -1e7)
-        # Shape: (batch, len_d)
-        question_doc_similarity = masked_similarity.max(dim=-1)[0].squeeze(-1)
-        # Shape: (batch, len_d)
-        question_doc_attention = util.masked_softmax(question_doc_similarity, x1_mask)
-        # Shape: (batch, 2*hidden_size)
-        question_passage_vector = util.weighted_sum(doc_hiddens, question_doc_attention)
-        # Shape: (batch, len_d, 2*hidden_size)
-        tiled_question_passage_vector = question_passage_vector.unsqueeze(1).expand(doc_hiddens.size())
-
-        # Shape: (batch, len_d, 2*hidden_size * 4)
-        final_merged_doc = torch.cat([doc_hiddens,
-                                      doc_question_vectors,
-                                      doc_hiddens * doc_question_vectors,
-                                      doc_hiddens * tiled_question_passage_vector],
-                                     dim=-1)
-
-        # Shape: (batch, len_d, 2*hidden_size)
-        modeled_doc = self.modeling_layer(final_merged_doc, x1_mask)
-        # Shape: (batch_size, len_d, 2*hidden_size * 4 + 2*hidden_size))
-        span_start_input = torch.cat([final_merged_doc, modeled_doc], dim=-1)
-        # Shape: (batch_size, len_d)
-        span_start_logits = self.span_start_predictor(span_start_input).squeeze(-1)
-        # Shape: (batch_size, len_d)
-        span_start_probs = util.masked_softmax(span_start_logits, x1_mask)
-
-        # Shape: (batch, 2*hidden_size)
-        span_start_representation = util.weighted_sum(modeled_doc, span_start_probs)
-        # Shape: (batch, len_d, 2*hidden_size)
-        tiled_start_representation = span_start_representation.unsqueeze(1).expand(modeled_doc.size())
-
-        # Shape: (batch, len_d, 2*hidden_size * 4 + 2*hidden_size * 3)
-        span_end_representation = torch.cat([final_merged_doc,
-                                             modeled_doc,
-                                             tiled_start_representation,
-                                             modeled_doc * tiled_start_representation],
-                                            dim=-1)
-        # Shape: (batch_size, len_d, 2*hidden_size)
-        encoded_span_end = self.span_end_encoder(span_end_representation, x1_mask)
-        # Shape: (batch_size, len_d, 2*hidden_size * 4 + 2*hidden_size)
-        span_end_input = torch.cat([final_merged_doc, encoded_span_end], dim=-1)
-        # Shape: (batch_size, len_d)
-        span_end_logits = self.span_end_predictor(span_end_input).squeeze(-1)
-        # Shape: (batch_size, len_d)
-        span_end_probs = util.masked_softmax(span_end_logits, x1_mask)
-
-        if self.training:
-            span_start_probs = util.masked_log_softmax(span_start_logits, x1_mask)
-            span_end_probs = util.masked_log_softmax(span_end_logits, x1_mask)
-
-        return span_start_probs, span_end_probs
