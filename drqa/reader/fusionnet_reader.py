@@ -227,12 +227,12 @@ class FusionNetReader(nn.Module):
         fa_multi_level_doc_hiddens = self.multi_level_rnn(torch.cat([low_level_doc_hiddens, high_level_doc_hiddens,
                                                                      low_level_doc_question_vectors,
                                                                      high_level_doc_question_vectors,
-                                                                     understanding_doc_question_vectors], dim=2), x1_mask)
+                                                                     understanding_doc_question_vectors], dim=2),
+                                                          x1_mask)
         #
         history_of_doc_word = torch.cat([x1_word_emb, x1_cove_emb, low_level_doc_hiddens, high_level_doc_hiddens,
                                          low_level_doc_question_vectors, high_level_doc_question_vectors,
                                          understanding_doc_question_vectors, fa_multi_level_doc_hiddens], dim=2)
-
 
         # shape: [batch, len_d, len_d]
         self_boosted_similarity = self.self_boosted_matrix_attention(history_of_doc_word, history_of_doc_word)
