@@ -39,7 +39,7 @@ class SymmetricBilinearSimilarity(SimilarityFunction):
 
     @overrides
     def forward(self, tensor_1: torch.Tensor, tensor_2: torch.Tensor) -> torch.Tensor:
-        intermediate = torch.matmul(tensor_1, self._weight_matrix.transpose())
+        intermediate = torch.matmul(tensor_1, self._weight_matrix.transpose(0, 1))
         intermediate = torch.matmul(intermediate, torch.diag(self._diagnoal_matrix))
         intermediate = torch.matmul(intermediate, self._weight_matrix)
         result = (intermediate * tensor_2).sum(dim=-1)
