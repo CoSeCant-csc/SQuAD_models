@@ -224,7 +224,7 @@ class FusionNetReader(nn.Module):
         # understanding_doc_question_vectors = util.weighted_sum(understanding_question_hiddens, understanding_norm_sim)
         #
 
-        fa_multi_level_doc_hiddens = high_level_question_hiddens
+        fa_multi_level_doc_hiddens = high_level_doc_hiddens
 
         # # Encode multi-level hiddens and vectors
         # fa_multi_level_doc_hiddens = self.multi_level_rnn(torch.cat([low_level_doc_hiddens, high_level_doc_hiddens,
