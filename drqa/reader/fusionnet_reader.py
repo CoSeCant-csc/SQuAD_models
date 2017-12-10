@@ -265,6 +265,7 @@ class FusionNetReader(nn.Module):
         _, memory_hidden = self.start_gru(gru_input, question_hidden)
         # shape: [batch, 2*hidden_size]
         memory_hidden = memory_hidden.squeeze(0)
+        # shape: [batch, len_d]
         end_scores = self.end_attn(understanding_doc_hiddens, memory_hidden, x1_mask)
         # log start_scores
         if self.training:
