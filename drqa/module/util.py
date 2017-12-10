@@ -171,7 +171,7 @@ def masked_softmax(vector, mask):
         # result.data.masked_fill_(mask.data, -float('inf'))
         # result = torch.nn.functional.softmax(result)
 
-        result = torch.nn.functional.softmax(vector * mask.type(vector.type()))
+        result = torch.nn.functional.softmax(vector * mask.type_as(vector))
         result = result * mask
         result = result / (result.sum(dim=1, keepdim=True) + 1e-13)
     return result
@@ -197,7 +197,7 @@ def masked_log_softmax(vector, mask):
     #     result = torch.nn.functional.log_softmax(vector)
     # return result
     if mask is not None:
-        vector = vector + mask.type(vector.type()).log()
+        vector = vector + mask.type_as(vector).log()
     return torch.nn.functional.log_softmax(vector)
 
 
