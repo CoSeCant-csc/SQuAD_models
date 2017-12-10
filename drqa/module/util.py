@@ -172,7 +172,7 @@ def masked_softmax(vector, mask):
         # result = torch.nn.functional.softmax(result)
 
         result = torch.nn.functional.softmax(vector * mask.type_as(vector))
-        result = result * mask
+        result = result * mask.type_as(vector)
         result = result / (result.sum(dim=1, keepdim=True) + 1e-13)
     return result
 
