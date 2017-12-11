@@ -167,13 +167,12 @@ def masked_softmax(vector, mask):
         result = torch.nn.functional.softmax(vector)
     else:
         # To limit numerical errors from large vector elements outside mask, we zero these out
-        # result = vector.clone()
-        # result.data.masked_fill_(mask.data, -float('inf'))
-        # result = torch.nn.functional.softmax(result)
-
-        result = torch.nn.functional.softmax(vector * mask.type_as(vector))
-        result = result * mask.type_as(vector)
-        result = result / (result.sum(dim=1, keepdim=True) + 1e-13)
+        result = vector.clone()
+        result.data.masked_fill_(mask.data, -float('inf'))
+        result = torch.nn.functional.softmax(result)
+        # result = torch.nn.functional.softmax(vector * mask.type_as(vector))
+        # result = result * mask.type_as(vector)
+        # result = result / (result.sum(dim=1, keepdim=True) + 1e-13)
     return result
 
 
@@ -189,16 +188,16 @@ def masked_log_softmax(vector, mask):
     of ``0.0``.  You should be masking the result of whatever computation comes out of this in that
     case, anyway, so it shouldn't matter.
     """
-    # if mask is not None:
-    #     result = vector.clone()
-    #     result.data.masked_fill_(mask.data, -float('inf'))
-    #     result = torch.nn.functional.log_softmax(result)
-    # else:
-    #     result = torch.nn.functional.log_softmax(vector)
-    # return result
     if mask is not None:
-        vector = vector + mask.type_as(vector).log()
-    return torch.nn.functional.log_softmax(vector)
+        result = vector.clone()
+        result.data.masked_fill_(mask.data, -float('inf'))
+        result = torch.nn.functional.log_softmax(result)
+    else:
+        result = torch.nn.functional.log_softmax(vector)
+    return result
+    # if mask is not None:
+    #     vector = vector + mask.type_as(vector).log()
+    # return torch.nn.functional.log_softmax(vector)
 
 
 
