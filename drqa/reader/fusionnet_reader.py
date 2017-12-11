@@ -97,22 +97,22 @@ class FusionNetReader(nn.Module):
         # [word_embedding, cove_embedding, low_level_doc_hidden, high_level_doc_hidden]
         history_of_word_size = args.embedding_dim + 2 * args.cove_embedding_dim + 4 * args.hidden_size
 
-        # self.low_level_matrix_attention = MatrixAttention(SymmetricBilinearSimilarity(history_of_word_size,
-        #                                                                               args.attention_size,
-        #                                                                               F.relu))
-        # self.high_level_matrix_attention = MatrixAttention(SymmetricBilinearSimilarity(history_of_word_size,
-        #                                                                                args.attention_size,
-        #                                                                                F.relu))
-        # self.understanding_matrix_attention = MatrixAttention(SymmetricBilinearSimilarity(history_of_word_size,
-        #                                                                                   args.attention_size,
-        #                                                                                   F.relu))
+        self.low_level_matrix_attention = MatrixAttention(SymmetricBilinearSimilarity(history_of_word_size,
+                                                                                      args.attention_size,
+                                                                                      F.relu))
+        self.high_level_matrix_attention = MatrixAttention(SymmetricBilinearSimilarity(history_of_word_size,
+                                                                                       args.attention_size,
+                                                                                       F.relu))
+        self.understanding_matrix_attention = MatrixAttention(SymmetricBilinearSimilarity(history_of_word_size,
+                                                                                          args.attention_size,
+                                                                                          F.relu))
 
-        self.low_level_matrix_attention = MatrixAttention(BilinearSimilarity(history_of_word_size,
-                                                                             history_of_word_size))
-        self.high_level_matrix_attention = MatrixAttention(BilinearSimilarity(history_of_word_size,
-                                                                              history_of_word_size))
-        self.understanding_matrix_attention = MatrixAttention(BilinearSimilarity(history_of_word_size,
-                                                                                 history_of_word_size))
+        # self.low_level_matrix_attention = MatrixAttention(BilinearSimilarity(history_of_word_size,
+        #                                                                      history_of_word_size))
+        # self.high_level_matrix_attention = MatrixAttention(BilinearSimilarity(history_of_word_size,
+        #                                                                       history_of_word_size))
+        # self.understanding_matrix_attention = MatrixAttention(BilinearSimilarity(history_of_word_size,
+        #                                                                          history_of_word_size))
 
         # Multi-level rnn
         # input: [low_level_doc, high_level_doc, low_level_fusion_doc, high_level_fusion_doc,
@@ -128,12 +128,12 @@ class FusionNetReader(nn.Module):
         # high_level_doc_question_vector, understanding_doc_question_vector, fa_multi_level_doc_hidden]
         history_of_doc_word_size = history_of_word_size + 4 * 2 * args.hidden_size
 
-        # self.self_boosted_matrix_attention = MatrixAttention(SymmetricBilinearSimilarity(history_of_doc_word_size,
-        #                                                                                  args.attention_size,
-        #                                                                                  F.relu))
+        self.self_boosted_matrix_attention = MatrixAttention(SymmetricBilinearSimilarity(history_of_doc_word_size,
+                                                                                         args.attention_size,
+                                                                                         F.relu))
         #
-        self.self_boosted_matrix_attention = MatrixAttention(BilinearSimilarity(history_of_doc_word_size,
-                                                                                history_of_doc_word_size))
+        # self.self_boosted_matrix_attention = MatrixAttention(BilinearSimilarity(history_of_doc_word_size,
+        #                                                                         history_of_doc_word_size))
         # Fully-Aware Self-Boosted fusion rnn
         # input: [fully_aware_encoded_doc(hidden state from last layer) ,self_boosted_fusion_doc]
         self.understanding_doc_rnn = layers.StackedBRNN(
