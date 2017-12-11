@@ -9,8 +9,9 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.nn.parameter import Parameter
 from torch.autograd import Variable
-
+import math
 
 # ------------------------------------------------------------------------------
 # Modules
@@ -440,7 +441,7 @@ class SymBilinearAttnMatch(nn.Module):
             matched_seq: batch * len1 * hdim
         """
         # batch * len1 * k
-        x_proj = torch.matmul(x.view(-1, x.size(2)), _weight_matrix).\
+        x_proj = torch.matmul(x.view(-1, x.size(2)), self._weight_matrix).\
             view(x.size(0), x.size(1), self.attention_dim)
         x_proj = F.relu(x_proj)
 
@@ -449,7 +450,7 @@ class SymBilinearAttnMatch(nn.Module):
 
         if x is not y:
             # batch * len2 * k
-            y_proj = torch.matmul(y.view(-1, y.size(2)), _weight_matrix).\
+            y_proj = torch.matmul(y.view(-1, y.size(2)), self._weight_matrix).\
                 view(y.size(0), y.size(1), self.attention_dim)
             y_proj = F.relu(y_proj)
 
