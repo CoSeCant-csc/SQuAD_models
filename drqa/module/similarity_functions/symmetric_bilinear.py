@@ -1,4 +1,5 @@
 import torch
+import math
 from torch.nn.parameter import Parameter
 from overrides import overrides
 
@@ -35,6 +36,8 @@ class SymmetricBilinearSimilarity(SimilarityFunction):
         self.reset_parameters()
 
     def reset_parameters(self):
+        std = math.sqrt(6 / (self._diagnoal_matrix.size(0) + 1))
+        self._diagnoal_matrix.data.uniform_(-std, std)
         torch.nn.init.xavier_uniform(self._weight_matrix)
 
     @overrides

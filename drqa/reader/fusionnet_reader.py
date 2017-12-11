@@ -128,9 +128,12 @@ class FusionNetReader(nn.Module):
         # high_level_doc_question_vector, understanding_doc_question_vector, fa_multi_level_doc_hidden]
         history_of_doc_word_size = history_of_word_size + 4 * 2 * args.hidden_size
 
-        self.self_boosted_matrix_attention = MatrixAttention(SymmetricBilinearSimilarity(history_of_doc_word_size,
-                                                                                         args.attention_size,
-                                                                                         F.relu))
+        # self.self_boosted_matrix_attention = MatrixAttention(SymmetricBilinearSimilarity(history_of_doc_word_size,
+        #                                                                                  args.attention_size,
+        #                                                                                  F.relu))
+        #
+        self.self_boosted_matrix_attention = MatrixAttention(LinearSimilarity(history_of_doc_word_size,
+                                                                              history_of_doc_word_size))
         # Fully-Aware Self-Boosted fusion rnn
         # input: [fully_aware_encoded_doc(hidden state from last layer) ,self_boosted_fusion_doc]
         self.understanding_doc_rnn = layers.StackedBRNN(
@@ -238,24 +241,25 @@ class FusionNetReader(nn.Module):
                                                            x1_mask)
         # fa_multi_level_doc_hiddens = low_level_doc_question_vectors
         # #
-        # history_of_doc_word = torch.cat([x1_word_emb, x1_cove_emb, low_level_doc_hiddens, high_level_doc_hiddens,
-        #                                  low_level_doc_question_vectors, high_level_doc_question_vectors,
-        #                                  understanding_doc_question_vectors, fa_multi_level_doc_hiddens], dim=2)
-        #
-        # # shape: [batch, len_d, len_d]
-        # self_boosted_similarity = self.self_boosted_matrix_attention(history_of_doc_word, history_of_doc_word)
-        #
-        # # shape: [batch, len_d, len_d]
-        # self_boosted_norm_sim = util.last_dim_softmax(self_boosted_similarity, x1_mask)
-        #
-        # # shape: [batch, len_d, 2*hidden_size]
-        # self_boosted_vectors = util.weighted_sum(fa_multi_level_doc_hiddens, self_boosted_norm_sim)
-        #
-        # # Encode vectors and hiddens
-        # # shape: [batch, len_d, 2*hidden_size]
-        # understanding_doc_hiddens = self.understanding_doc_rnn(torch.cat([fa_multi_level_doc_hiddens,
-        #                                                                   self_boosted_vectors], dim=2), x1_mask)
-        understanding_doc_hiddens = fa_multi_level_doc_hiddens
+        history_of_doc_word = torch.cat([x1_word_emb, x1_cove_emb, low_level_doc_hiddens, high_level_doc_hiddens,
+                                         low_level_doc_question_vectors, high_level_doc_question_vectors,
+                                         understanding_doc_question_vectors, fa_multi_level_doc_hiddens], dim=2)
+
+        # shape: [batch, len_d, len_d]
+        self_boosted_similarity = self.self_boosted_matrix_attention(history_of_doc_word, history_of_doc_word)
+
+        # shape: [batch, len_d, len_d]
+        self_boosted_norm_sim = util.last_dim_softmax(self_boosted_similarity, x1_mask)
+
+        # shape: [batch, len_d, 2*hidden_size]
+        self_boosted_vectors = util.weighted_sum(fa_multi_level_doc_hiddens, self_boosted_norm_sim)
+
+        # Encode vectors and hiddens
+        # shape: [batch, len_d, 2*hidden_size]
+        understanding_doc_hiddens = self.understanding_doc_rnn(torch.cat([fa_multi_level_doc_hiddens,
+                                                                          self_boosted_vectors], dim=2), x1_mask)
+
+        # understanding_doc_hiddens = fa_multi_level_doc_hiddens
 
         # shape: [batch, len_q]
         q_merge_weights = self.question_self_attn(understanding_question_hiddens, x2_mask)
