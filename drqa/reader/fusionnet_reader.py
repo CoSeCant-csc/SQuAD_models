@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from . import layers
 from cove import MTLSTM
 from ..module import MatrixAttention, util
-from ..module.similarity_functions import SymmetricBilinearSimilarity, LinearSimilarity
+from ..module.similarity_functions import SymmetricBilinearSimilarity, LinearSimilarity, BilinearSimilarity
 
 
 # ------------------------------------------------------------------------------
@@ -107,12 +107,12 @@ class FusionNetReader(nn.Module):
         #                                                                                   args.attention_size,
         #                                                                                   F.relu))
 
-        self.low_level_matrix_attention = MatrixAttention(LinearSimilarity(history_of_word_size,
-                                                                           history_of_word_size))
-        self.high_level_matrix_attention = MatrixAttention(LinearSimilarity(history_of_word_size,
-                                                                            history_of_word_size))
-        self.understanding_matrix_attention = MatrixAttention(LinearSimilarity(history_of_word_size,
-                                                                               history_of_word_size))
+        self.low_level_matrix_attention = MatrixAttention(BilinearSimilarity(history_of_word_size,
+                                                                             history_of_word_size))
+        self.high_level_matrix_attention = MatrixAttention(BilinearSimilarity(history_of_word_size,
+                                                                              history_of_word_size))
+        self.understanding_matrix_attention = MatrixAttention(BilinearSimilarity(history_of_word_size,
+                                                                                 history_of_word_size))
 
         # Multi-level rnn
         # input: [low_level_doc, high_level_doc, low_level_fusion_doc, high_level_fusion_doc,
@@ -132,8 +132,8 @@ class FusionNetReader(nn.Module):
         #                                                                                  args.attention_size,
         #                                                                                  F.relu))
         #
-        self.self_boosted_matrix_attention = MatrixAttention(LinearSimilarity(history_of_doc_word_size,
-                                                                              history_of_doc_word_size))
+        self.self_boosted_matrix_attention = MatrixAttention(BilinearSimilarity(history_of_doc_word_size,
+                                                                                history_of_doc_word_size))
         # Fully-Aware Self-Boosted fusion rnn
         # input: [fully_aware_encoded_doc(hidden state from last layer) ,self_boosted_fusion_doc]
         self.understanding_doc_rnn = layers.StackedBRNN(
@@ -238,7 +238,7 @@ class FusionNetReader(nn.Module):
                                                                      low_level_doc_question_vectors,
                                                                      high_level_doc_question_vectors,
                                                                      understanding_doc_question_vectors], dim=2),
-                                                           x1_mask)
+                                                          x1_mask)
         # fa_multi_level_doc_hiddens = low_level_doc_question_vectors
         # #
         history_of_doc_word = torch.cat([x1_word_emb, x1_cove_emb, low_level_doc_hiddens, high_level_doc_hiddens,
