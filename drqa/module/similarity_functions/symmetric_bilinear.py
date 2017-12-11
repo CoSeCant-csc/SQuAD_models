@@ -32,6 +32,7 @@ class SymmetricBilinearSimilarity(SimilarityFunction):
         super(SymmetricBilinearSimilarity, self).__init__()
         self._weight_matrix = Parameter(torch.Tensor(attention_dim, tensor_dim))
         self._diagnoal_matrix = Parameter(torch.Tensor(attention_dim))
+        self._bias = Parameter(torch.Tensor(1))
         self._activation = activation
         self.reset_parameters()
 
@@ -39,6 +40,7 @@ class SymmetricBilinearSimilarity(SimilarityFunction):
         std = math.sqrt(6 / (self._diagnoal_matrix.size(0) + 1))
         self._diagnoal_matrix.data.uniform_(-std, std)
         torch.nn.init.xavier_uniform(self._weight_matrix)
+        self._bias.data.fill_(0)
 
     @overrides
     def forward(self, tensor_1: torch.Tensor, tensor_2: torch.Tensor) -> torch.Tensor:
@@ -46,4 +48,4 @@ class SymmetricBilinearSimilarity(SimilarityFunction):
         intermediate = torch.matmul(intermediate, torch.diag(self._diagnoal_matrix))
         intermediate = torch.matmul(intermediate, self._weight_matrix)
         result = (intermediate * tensor_2).sum(dim=-1)
-        return self._activation(result)
+        return self._activation(result + self._bias)
