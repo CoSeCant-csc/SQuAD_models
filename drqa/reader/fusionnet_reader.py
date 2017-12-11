@@ -97,15 +97,15 @@ class FusionNetReader(nn.Module):
         # [word_embedding, cove_embedding, low_level_doc_hidden, high_level_doc_hidden]
         history_of_word_size = args.embedding_dim + 2 * args.cove_embedding_dim + 4 * args.hidden_size
 
-        self.low_level_matrix_attention = MatrixAttention(SymmetricBilinearSimilarity(history_of_word_size,
-                                                                                      args.attention_size,
-                                                                                      F.relu))
-        self.high_level_matrix_attention = MatrixAttention(SymmetricBilinearSimilarity(history_of_word_size,
-                                                                                       args.attention_size,
-                                                                                       F.relu))
-        self.understanding_matrix_attention = MatrixAttention(SymmetricBilinearSimilarity(history_of_word_size,
-                                                                                          args.attention_size,
-                                                                                          F.relu))
+        # self.low_level_matrix_attention = MatrixAttention(SymmetricBilinearSimilarity(history_of_word_size,
+        #                                                                               args.attention_size,
+        #                                                                               F.relu))
+        # self.high_level_matrix_attention = MatrixAttention(SymmetricBilinearSimilarity(history_of_word_size,
+        #                                                                                args.attention_size,
+        #                                                                                F.relu))
+        # self.understanding_matrix_attention = MatrixAttention(SymmetricBilinearSimilarity(history_of_word_size,
+        #                                                                                   args.attention_size,
+        #                                                                                   F.relu))
 
         # self.low_level_matrix_attention = MatrixAttention(BilinearSimilarity(history_of_word_size,
         #                                                                      history_of_word_size))
@@ -113,6 +113,13 @@ class FusionNetReader(nn.Module):
         #                                                                       history_of_word_size))
         # self.understanding_matrix_attention = MatrixAttention(BilinearSimilarity(history_of_word_size,
         #                                                                          history_of_word_size))
+
+        self.low_level_matrix_attention_layer = layers.SymBilinearAttnMatch(history_of_word_size,
+                                                                            args.attention_size)
+        self.high_level_matrix_attention_layer = layers.SymBilinearAttnMatch(history_of_word_size,
+                                                                             args.attention_size)
+        self.understanding_matrix_attention_layer = layers.SymBilinearAttnMatch(history_of_word_size,
+                                                                                args.attention_size)
 
         # Multi-level rnn
         # input: [low_level_doc, high_level_doc, low_level_fusion_doc, high_level_fusion_doc,
@@ -128,9 +135,13 @@ class FusionNetReader(nn.Module):
         # high_level_doc_question_vector, understanding_doc_question_vector, fa_multi_level_doc_hidden]
         history_of_doc_word_size = history_of_word_size + 4 * 2 * args.hidden_size
 
-        self.self_boosted_matrix_attention = MatrixAttention(SymmetricBilinearSimilarity(history_of_doc_word_size,
-                                                                                         args.attention_size,
-                                                                                         F.relu))
+        # self.self_boosted_matrix_attention = MatrixAttention(SymmetricBilinearSimilarity(history_of_doc_word_size,
+        #                                                                                  args.attention_size,
+        #                                                                                  F.relu))
+
+        self.self_boosted_matrix_attention_layer = layers.SymBilinearAttnMatch(history_of_doc_word_size,
+                                                                               args.attention_size)
+
         #
         # self.self_boosted_matrix_attention = MatrixAttention(BilinearSimilarity(history_of_doc_word_size,
         #                                                                         history_of_doc_word_size))
@@ -217,21 +228,29 @@ class FusionNetReader(nn.Module):
         # history of word shape:[batch, len_q, history_of_word_size]
         history_of_question_word = torch.cat([x2_word_emb, x2_cove_emb, low_level_question_hiddens,
                                               low_level_question_hiddens], dim=2)
-        # high_level_doc_hiddens
-        # fully-aware multi-level attention
-        low_level_similarity = self.low_level_matrix_attention(history_of_doc_word, history_of_question_word)
-        high_level_similarity = self.high_level_matrix_attention(history_of_doc_word, history_of_question_word)
-        understanding_similarity = self.understanding_matrix_attention(history_of_doc_word, history_of_question_word)
+        # # high_level_doc_hiddens
+        # # fully-aware multi-level attention
+        # low_level_similarity = self.low_level_matrix_attention(history_of_doc_word, history_of_question_word)
+        # high_level_similarity = self.high_level_matrix_attention(history_of_doc_word, history_of_question_word)
+        # understanding_similarity = self.understanding_matrix_attention(history_of_doc_word, history_of_question_word)
+        #
+        # # shape: [batch, len_d, len_q]
+        # low_level_norm_sim = util.last_dim_softmax(low_level_similarity, x2_mask)
+        # high_level_norm_sim = util.last_dim_softmax(high_level_similarity, x2_mask)
+        # understanding_norm_sim = util.last_dim_softmax(understanding_similarity, x2_mask)
+        #
+        # # shape: [batch, len_d, 2*hidden_size]
+        # low_level_doc_question_vectors = util.weighted_sum(low_level_question_hiddens, low_level_norm_sim)
+        # high_level_doc_question_vectors = util.weighted_sum(high_level_question_hiddens, high_level_norm_sim)
+        # understanding_doc_question_vectors = util.weighted_sum(understanding_question_hiddens, understanding_norm_sim)
 
-        # shape: [batch, len_d, len_q]
-        low_level_norm_sim = util.last_dim_softmax(low_level_similarity, x2_mask)
-        high_level_norm_sim = util.last_dim_softmax(high_level_similarity, x2_mask)
-        understanding_norm_sim = util.last_dim_softmax(understanding_similarity, x2_mask)
+        low_level_doc_question_vectors = self.low_level_matrix_attention_layer(
+            history_of_doc_word, history_of_question_word, x2_mask, low_level_question_hiddens)
+        high_level_doc_question_vectors = self.high_level_matrix_attention_layer(
+            history_of_doc_word, history_of_question_word, x2_mask, high_level_question_hiddens)
+        understanding_doc_question_vectors = self.understanding_matrix_attention_layer(
+            history_of_doc_word, history_of_question_word, x2_mask, understanding_question_hiddens)
 
-        # shape: [batch, len_d, 2*hidden_size]
-        low_level_doc_question_vectors = util.weighted_sum(low_level_question_hiddens, low_level_norm_sim)
-        high_level_doc_question_vectors = util.weighted_sum(high_level_question_hiddens, high_level_norm_sim)
-        understanding_doc_question_vectors = util.weighted_sum(understanding_question_hiddens, understanding_norm_sim)
 
         # Encode multi-level hiddens and vectors
         fa_multi_level_doc_hiddens = self.multi_level_rnn(torch.cat([low_level_doc_hiddens, high_level_doc_hiddens,
@@ -242,17 +261,21 @@ class FusionNetReader(nn.Module):
         # fa_multi_level_doc_hiddens = low_level_doc_question_vectors
         #
         history_of_doc_word2 = torch.cat([x1_word_emb, x1_cove_emb, low_level_doc_hiddens, high_level_doc_hiddens,
-                                         low_level_doc_question_vectors, high_level_doc_question_vectors,
-                                         understanding_doc_question_vectors, fa_multi_level_doc_hiddens], dim=2)
+                                          low_level_doc_question_vectors, high_level_doc_question_vectors,
+                                          understanding_doc_question_vectors, fa_multi_level_doc_hiddens], dim=2)
 
-        # shape: [batch, len_d, len_d]
-        self_boosted_similarity = self.self_boosted_matrix_attention(history_of_doc_word2, history_of_doc_word2)
+        # # shape: [batch, len_d, len_d]
+        # self_boosted_similarity = self.self_boosted_matrix_attention(history_of_doc_word2, history_of_doc_word2)
+        #
+        # # shape: [batch, len_d, len_d]
+        # self_boosted_norm_sim = util.last_dim_softmax(self_boosted_similarity, x1_mask)
+        #
+        # # shape: [batch, len_d, 2*hidden_size]
+        # self_boosted_vectors = util.weighted_sum(fa_multi_level_doc_hiddens, self_boosted_norm_sim)
 
-        # shape: [batch, len_d, len_d]
-        self_boosted_norm_sim = util.last_dim_softmax(self_boosted_similarity, x1_mask)
+        self_boosted_vectors = self.self_boosted_matrix_attention_layer(
+            history_of_doc_word2, history_of_doc_word2, x1_mask, fa_multi_level_doc_hiddens)
 
-        # shape: [batch, len_d, 2*hidden_size]
-        self_boosted_vectors = util.weighted_sum(fa_multi_level_doc_hiddens, self_boosted_norm_sim)
 
         # Encode vectors and hiddens
         # shape: [batch, len_d, 2*hidden_size]

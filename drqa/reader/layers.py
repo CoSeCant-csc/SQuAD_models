@@ -408,6 +408,71 @@ class MatchAttn(nn.Module):
         alpha = F.softmax(score)
         return alpha
 
+class SymBilinearAttnMatch(nn.Module):
+    """Given sequences X and Y, match sequence Y to each element in X.
+
+    * o_i = sum(alpha_j * y_j) for i in X
+    * alpha_j = softmax(y_j * U^T * D * U * x_i)
+    """
+    def __init__(self, tensor_dim, attention_dim):
+        super(SymBilinearAttnMatch, self).__init__()
+        self.tensor_dim = tensor_dim
+        self.attention_dim =attention_dim
+        self._weight_matrix = Parameter(torch.Tensor(tensor_dim, attention_dim))
+        self._diagnoal_matrix = Parameter(torch.Tensor(attention_dim))
+        self._bias = Parameter(torch.Tensor(1))
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        std = math.sqrt(6 / (self._diagnoal_matrix.size(0) + 1))
+        self._diagnoal_matrix.data.uniform_(-std, std)
+        torch.nn.init.xavier_uniform(self._weight_matrix)
+        self._bias.data.fill_(0)
+
+    def forward(self, x, y, y_mask, fusion_vectors):
+        """
+        Args:
+            x: batch * len1 * hdim
+            y: batch * len2 * hdim
+            y_mask: batch * len2 (1 for padding, 0 for true)
+            fusion_vectors: batch * len2 * fhdim
+        Output:
+            matched_seq: batch * len1 * hdim
+        """
+        # batch * len1 * k
+        x_proj = torch.matmul(x.view(-1, x.size(2)), _weight_matrix).\
+            view(x.size(0), x.size(1), self.attention_dim)
+        x_proj = F.relu(x_proj)
+
+        # batch * len1 * k
+        temp = torch.matmul(x_proj.view(-1, x_proj.size(2)), torch.diag(self._diagnoal_matrix)).view(x_proj.size())
+
+        if x is not y:
+            # batch * len2 * k
+            y_proj = torch.matmul(y.view(-1, y.size(2)), _weight_matrix).\
+                view(y.size(0), y.size(1), self.attention_dim)
+            y_proj = F.relu(y_proj)
+
+            # Compute scores
+            scores = temp.bmm(y_proj.transpose(2, 1))  # batch * len1 * len2
+        else:
+            # Compute scores
+            scores = temp.bmm(x_proj.transpose(2, 1))  # batch * len1 * len2
+
+
+        # Mask padding
+        y_mask = y_mask.unsqueeze(1).expand(scores.size())  # batch * 1 * len2 ==> batch * len1 * len2
+        scores.data.masked_fill_(y_mask.data, -float('inf'))
+
+        # Normalize with softmax
+        alpha_flat = F.softmax(scores.view(-1, y.size(1)))  # (batch * len1) * len2
+        alpha = alpha_flat.view(-1, x.size(1), y.size(1))  # batch * len1 * len2
+
+        # Take weighted average
+        matched_seq = alpha.bmm(fusion_vectors)  # batch * len1 * fhdim
+        return matched_seq
+
+
 class SeqAttnMatch(nn.Module):
     """Given sequences X and Y, match sequence Y to each element in X.
 
@@ -433,9 +498,9 @@ class SeqAttnMatch(nn.Module):
         """
         # Project vectors
         if self.linear:
-            x_proj = self.linear(x.view(-1, x.size(2))).view(x.size())
+            x_proj = self.linear(x.view(-1, x.size(2))).view(x.size())  # batch * len1 * hdim
             x_proj = F.relu(x_proj)
-            y_proj = self.linear(y.view(-1, y.size(2))).view(y.size())
+            y_proj = self.linear(y.view(-1, y.size(2))).view(y.size())  # batch * len2 * hdim
             y_proj = F.relu(y_proj)
         else:
             x_proj = x
