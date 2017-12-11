@@ -55,7 +55,7 @@ class DocReader(object):
         elif args.model_type.lower() == 'mlstm':
             self.network = mLSTMDocReader(args, normalize)
         elif args.model_type.lower() == 'bidaf':
-            self.network = BidafDocReader(args, normalize)
+            self.network = BidafDocReader(args)
         elif args.model_type.lower() == 'fusionnet':
             self.network = FusionNetReader(args)
         else:
