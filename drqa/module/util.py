@@ -164,16 +164,16 @@ def masked_softmax(vector, mask):
     that uses categorical cross-entropy loss.
     """
     if mask is None:
-        result = torch.nn.functional.softmax(vector)
+        vector = torch.nn.functional.softmax(vector)
     else:
         # To limit numerical errors from large vector elements outside mask, we zero these out
-        result = vector.clone()
-        result.data.masked_fill_(mask.data, -float('inf'))
-        result = torch.nn.functional.softmax(result)
+        # result = vector.clone()
+        vector.data.masked_fill_(mask.data, -float('inf'))
+        vector = torch.nn.functional.softmax(vector)
         # result = torch.nn.functional.softmax(vector * mask.type_as(vector))
         # result = result * mask.type_as(vector)
         # result = result / (result.sum(dim=1, keepdim=True) + 1e-13)
-    return result
+    return vector
 
 
 def masked_log_softmax(vector, mask):
@@ -189,12 +189,12 @@ def masked_log_softmax(vector, mask):
     case, anyway, so it shouldn't matter.
     """
     if mask is not None:
-        result = vector.clone()
-        result.data.masked_fill_(mask.data, -float('inf'))
-        result = torch.nn.functional.log_softmax(result)
+        # result = vector.clone()
+        vector.data.masked_fill_(mask.data, -float('inf'))
+        vector = torch.nn.functional.log_softmax(vector)
     else:
-        result = torch.nn.functional.log_softmax(vector)
-    return result
+        vector = torch.nn.functional.log_softmax(vector)
+    return vector
     # if mask is not None:
     #     vector = vector + mask.type_as(vector).log()
     # return torch.nn.functional.log_softmax(vector)
